@@ -3,16 +3,32 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { Request, Response } from 'express';
 import db from './config/db';
+import monitoringRoutes from './routes/monitoring';
+import authRoutes from './routes/auth';
+import userRoutes from './routes/users';
+import organizationRoutes from './routes/organizations';
+import instructorRoutes from './routes/instructors';
+import courseTypesRouter from './routes/courseTypes';
+import accountingRoutes from './routes/accounting';
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 9005;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/organizations', organizationRoutes);
+app.use('/api/instructors', instructorRoutes);
+app.use('/api/monitoring', monitoringRoutes);
+app.use('/api/course-types', courseTypesRouter);
+app.use('/api/accounting', accountingRoutes);
 
 // Test endpoint with DB check
 app.get('/api/test', async (req: Request, res: Response) => {
@@ -51,11 +67,16 @@ app.get('/api/health', async (req: Request, res: Response) => {
     }
 });
 
+// Test database connection
+db.raw('SELECT 1')
+    .then(() => {
+        console.log('Database connected successfully');
+    })
+    .catch((err) => {
+        console.error('Database connection error:', err);
+    });
+
 // Start server
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
-    // Test DB connection on startup
-    db.raw('SELECT 1')
-        .then(() => console.log('Database connected successfully'))
-        .catch(err => console.error('Database connection failed:', err));
 }); 
