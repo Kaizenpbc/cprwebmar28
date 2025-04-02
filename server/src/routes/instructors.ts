@@ -8,7 +8,7 @@ const router = express.Router();
 router.use(authenticateToken);
 
 // Get all instructors
-router.get('/', requireRole(['sysAdmin', 'orgAdmin']), async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/', requireRole(['sysAdmin', 'orgAdmin', 'instructor']), async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const result = await pool.query(
             'SELECT u.*, o.name as organization_name FROM users u ' +
@@ -25,7 +25,7 @@ router.get('/', requireRole(['sysAdmin', 'orgAdmin']), async (req: AuthRequest, 
 });
 
 // Get instructor by ID
-router.get('/:id', requireRole(['sysAdmin', 'orgAdmin']), async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/:id', requireRole(['sysAdmin', 'orgAdmin', 'instructor']), async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const result = await pool.query(
             'SELECT u.*, o.name as organization_name FROM users u ' +
@@ -47,7 +47,7 @@ router.get('/:id', requireRole(['sysAdmin', 'orgAdmin']), async (req: AuthReques
 });
 
 // Get instructor's availability
-router.get('/:id/availability', requireRole(['sysAdmin', 'orgAdmin']), async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/:id/availability', requireRole(['sysAdmin', 'orgAdmin', 'instructor']), async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const result = await pool.query(
             'SELECT * FROM instructor_availability WHERE instructor_id = $1',
@@ -61,7 +61,7 @@ router.get('/:id/availability', requireRole(['sysAdmin', 'orgAdmin']), async (re
 });
 
 // Get instructor's courses
-router.get('/:id/courses', requireRole(['sysAdmin', 'orgAdmin']), async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/:id/courses', requireRole(['sysAdmin', 'orgAdmin', 'instructor']), async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const result = await pool.query(
             'SELECT ci.*, c.name as course_name FROM course_instances ci ' +
