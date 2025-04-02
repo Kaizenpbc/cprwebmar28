@@ -6,7 +6,7 @@ dotenv.config();
 export const pool = new Pool({
     user: process.env.DB_USER || 'postgres',
     host: process.env.DB_HOST || 'localhost',
-    database: process.env.DB_NAME || 'cpr_database',
-    password: process.env.DB_PASSWORD || 'postgres',
+    database: process.env.DB_NAME || 'educational_system',
+    password: process.env.DB_PASSWORD || 'gtacpr',
     port: parseInt(process.env.DB_PORT || '5432'),
 }); 

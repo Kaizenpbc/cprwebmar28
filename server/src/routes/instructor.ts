@@ -20,23 +20,49 @@ router.get('/courses', requireRole(['instructor']), async (req: AuthRequest, res
         }
 
         const query = `
-            SELECT 
-                ci.id,
-                ci.requested_date as date,
-                o.name as organization,
-                ci.location,
-                ct.name as course_type,
-                COALESCE(COUNT(DISTINCT sr.student_id), 0) as students_registered,
-                0 as students_attendance,
-                ci.status,
-                ci.notes
-            FROM course_instances ci 
-            JOIN course_types ct ON ci.course_type_id = ct.id
-            JOIN organizations o ON ci.organization_id = o.id
-            LEFT JOIN student_registrations sr ON ci.id = sr.course_instance_id
-            WHERE ci.instructor_id = $1 
-            GROUP BY ci.id, ct.name, o.name, ci.location, ci.status, ci.notes
-            ORDER BY ci.requested_date DESC
+            WITH instructor_dates AS (
+                SELECT 
+                    NULL::integer as id,
+                    date,
+                    NULL::text as organization,
+                    NULL::text as location,
+                    NULL::text as course_type,
+                    0::integer as students_registered,
+                    0::integer as students_attendance,
+                    'available'::text as status,
+                    NULL::text as notes
+                FROM instructor_availability 
+                WHERE instructor_id = $1
+                AND date >= CURRENT_DATE
+                AND date NOT IN (
+                    SELECT requested_date::date
+                    FROM course_instances
+                    WHERE instructor_id = $1
+                )
+            ),
+            course_data AS (
+                SELECT 
+                    ci.id::integer,
+                    ci.requested_date::date as date,
+                    o.name::text as organization,
+                    ci.location::text,
+                    ct.name::text as course_type,
+                    COALESCE(COUNT(DISTINCT sr.student_id), 0)::integer as students_registered,
+                    COALESCE(COUNT(DISTINCT sa.student_id), 0)::integer as students_attendance,
+                    ci.status::text,
+                    ci.notes::text
+                FROM course_instances ci 
+                JOIN course_types ct ON ci.course_type_id = ct.id
+                JOIN organizations o ON ci.organization_id = o.id
+                LEFT JOIN student_registrations sr ON ci.id = sr.course_instance_id
+                LEFT JOIN student_attendance sa ON ci.id = sa.course_instance_id AND sa.attended = true
+                WHERE ci.instructor_id = $1 
+                GROUP BY ci.id, ct.name, o.name, ci.location, ci.status, ci.notes
+            )
+            SELECT * FROM instructor_dates
+            UNION ALL
+            SELECT * FROM course_data
+            ORDER BY date DESC
         `;
         
         console.log('Instructor courses route - Executing query with instructor_id:', req.user?.userId);

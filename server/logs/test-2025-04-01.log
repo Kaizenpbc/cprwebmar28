@@ -1,0 +1,113 @@
+[2025-04-01T23:18:52.543Z] Starting login tests...
+[2025-04-01T23:18:52.544Z] Checking server status...
+[2025-04-01T23:18:52.592Z] Server is not running or not healthy: 
+Error details: {
+  "message": "",
+  "name": "AggregateError",
+  "stack": "AggregateError\n    at Function.AxiosError.from (C:\\Users\\gerog\\Documents\\CPR-WEB-Mar 28\\server\\node_modules\\axios\\lib\\core\\AxiosError.js:92:14)\n    at RedirectableRequest.handleRequestError (C:\\Users\\gerog\\Documents\\CPR-WEB-Mar 28\\server\\node_modules\\axios\\lib\\adapters\\http.js:620:25)\n    at RedirectableRequest.emit (node:events:524:28)\n    at RedirectableRequest.emit (node:domain:489:12)\n    at ClientRequest.eventHandlers.<computed> (C:\\Users\\gerog\\Documents\\CPR-WEB-Mar 28\\server\\node_modules\\follow-redirects\\index.js:49:24)\n    at ClientRequest.emit (node:events:524:28)\n    at ClientRequest.emit (node:domain:489:12)\n    at emitErrorEvent (node:_http_client:104:11)\n    at Socket.socketErrorListener (node:_http_client:518:5)\n    at Socket.emit (node:events:524:28)\n    at Axios.request (C:\\Users\\gerog\\Documents\\CPR-WEB-Mar 28\\server\\node_modules\\axios\\lib\\core\\Axios.js:45:41)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)",
+  "config": {
+    "transitional": {
+      "silentJSONParsing": true,
+      "forcedJSONParsing": true,
+      "clarifyTimeoutError": false
+    },
+    "adapter": [
+      "xhr",
+      "http",
+      "fetch"
+    ],
+    "transformRequest": [
+      null
+    ],
+    "transformResponse": [
+      null
+    ],
+    "timeout": 0,
+    "xsrfCookieName": "XSRF-TOKEN",
+    "xsrfHeaderName": "X-XSRF-TOKEN",
+    "maxContentLength": -1,
+    "maxBodyLength": -1,
+    "env": {},
+    "headers": {
+      "Accept": "application/json, text/plain, */*",
+      "User-Agent": "axios/1.8.4",
+      "Accept-Encoding": "gzip, compress, deflate, br"
+    },
+    "method": "get",
+    "url": "http://localhost:9005/api/health",
+    "allowAbsoluteUrls": true
+  },
+  "code": "ECONNREFUSED"
+}
+[2025-04-01T23:18:52.602Z] Please start the server before running tests
+[2025-04-01T23:22:40.660Z] Starting login tests...
+[2025-04-01T23:22:40.662Z] Checking server status...
+[2025-04-01T23:22:40.700Z] Server is running and healthy
+Error details: {
+  "status": "ok",
+  "timestamp": "2025-04-01T23:22:40.695Z",
+  "uptime": 84.9477785,
+  "memory": {
+    "rss": 58216448,
+    "heapTotal": 15634432,
+    "heapUsed": 13496120,
+    "external": 2411877,
+    "arrayBuffers": 25057
+  }
+}
+[2025-04-01T23:22:40.701Z] Starting login tests...
+[2025-04-01T23:22:40.701Z] Testing valid instructor login...
+[2025-04-01T23:22:40.864Z] Instructor login successful
+Error details: {
+  "role": "instructor",
+  "tokenPreview": "eyJhbGciOiJIUzI1NiIs..."
+}
+[2025-04-01T23:22:40.865Z] Testing invalid password...
+[2025-04-01T23:22:40.956Z] Invalid password test passed
+[2025-04-01T23:22:40.957Z] Testing invalid portal...
+[2025-04-01T23:22:41.042Z] Invalid portal test passed
+[2025-04-01T23:22:41.043Z] Testing non-existent user...
+[2025-04-01T23:22:41.047Z] Non-existent user test passed
+[2025-04-01T23:22:41.048Z] All tests completed successfully. Duration: 388ms
+[2025-04-01T23:29:03.375Z] Starting login tests...
+[2025-04-01T23:29:03.377Z] Checking server status...
+[2025-04-01T23:29:03.431Z] Server is not running or not healthy: 
+Error details: {
+  "message": "",
+  "name": "AggregateError",
+  "stack": "AggregateError\n    at Function.AxiosError.from (C:\\Users\\gerog\\Documents\\CPR-WEB-Mar 28\\server\\node_modules\\axios\\lib\\core\\AxiosError.js:92:14)\n    at RedirectableRequest.handleRequestError (C:\\Users\\gerog\\Documents\\CPR-WEB-Mar 28\\server\\node_modules\\axios\\lib\\adapters\\http.js:620:25)\n    at RedirectableRequest.emit (node:events:524:28)\n    at RedirectableRequest.emit (node:domain:489:12)\n    at ClientRequest.eventHandlers.<computed> (C:\\Users\\gerog\\Documents\\CPR-WEB-Mar 28\\server\\node_modules\\follow-redirects\\index.js:49:24)\n    at ClientRequest.emit (node:events:524:28)\n    at ClientRequest.emit (node:domain:489:12)\n    at emitErrorEvent (node:_http_client:104:11)\n    at Socket.socketErrorListener (node:_http_client:518:5)\n    at Socket.emit (node:events:524:28)\n    at Axios.request (C:\\Users\\gerog\\Documents\\CPR-WEB-Mar 28\\server\\node_modules\\axios\\lib\\core\\Axios.js:45:41)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)",
+  "config": {
+    "transitional": {
+      "silentJSONParsing": true,
+      "forcedJSONParsing": true,
+      "clarifyTimeoutError": false
+    },
+    "adapter": [
+      "xhr",
+      "http",
+      "fetch"
+    ],
+    "transformRequest": [
+      null
+    ],
+    "transformResponse": [
+      null
+    ],
+    "timeout": 0,
+    "xsrfCookieName": "XSRF-TOKEN",
+    "xsrfHeaderName": "X-XSRF-TOKEN",
+    "maxContentLength": -1,
+    "maxBodyLength": -1,
+    "env": {},
+    "headers": {
+      "Accept": "application/json, text/plain, */*",
+      "User-Agent": "axios/1.8.4",
+      "Accept-Encoding": "gzip, compress, deflate, br"
+    },
+    "method": "get",
+    "url": "http://localhost:9005/api/health",
+    "allowAbsoluteUrls": true
+  },
+  "code": "ECONNREFUSED"
+}
+[2025-04-01T23:29:03.432Z] Please start the server before running tests

@@ -15,11 +15,11 @@ const config: { [key: string]: Knex.Config } = {
       port: Number(process.env.DB_PORT) || 5432
     },
     migrations: {
-      directory: path.join(__dirname, 'src/migrations'),
+      directory: path.resolve(__dirname, 'src/migrations'),
       extension: 'ts'
     },
     seeds: {
-      directory: path.join(__dirname, 'src/seeds'),
+      directory: path.resolve(__dirname, 'src/seeds'),
       extension: 'ts'
     }
   },
@@ -34,11 +34,11 @@ const config: { [key: string]: Knex.Config } = {
       ssl: { rejectUnauthorized: false }
     },
     migrations: {
-      directory: path.join(__dirname, 'dist/migrations'),
+      directory: path.resolve(__dirname, 'dist/migrations'),
       extension: 'js'
     },
     seeds: {
-      directory: path.join(__dirname, 'dist/seeds'),
+      directory: path.resolve(__dirname, 'dist/seeds'),
       extension: 'js'
     }
   }
