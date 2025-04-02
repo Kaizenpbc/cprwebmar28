@@ -9,9 +9,9 @@ const config: { [key: string]: Knex.Config } = {
     client: 'pg',
     connection: {
       host: process.env.DB_HOST || 'localhost',
-      user: process.env.DB_USER || 'cpr_web_user',
-      password: process.env.DB_PASSWORD || 'cpr_web_password',
-      database: process.env.DB_NAME || 'cpr_web',
+      user: process.env.DB_USER || 'postgres',
+      password: process.env.DB_PASSWORD || 'gtacpr',
+      database: process.env.DB_NAME || 'cpr_db_dev',
       port: parseInt(process.env.DB_PORT || '5432'),
     },
     pool: {

@@ -15,8 +15,8 @@ router.get('/upcoming-classes', roleMiddleware([UserRole.INSTRUCTOR]), async (re
     const upcomingClasses = await db('course_instances')
       .select('*')
       .where('instructor_id', req.user?.userId)
-      .where('start_time', '>', new Date())
-      .orderBy('start_time', 'asc')
+      .where('date', '>', new Date())
+      .orderBy('date', 'asc')
       .limit(5);
 
     res.json(upcomingClasses);

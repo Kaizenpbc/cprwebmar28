@@ -50,7 +50,7 @@ router.get('/:id/availability', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZ
     const availability = await db('instructor_availability')
       .select('*')
       .where({ instructor_id: req.params.id })
-      .orderBy('start_time');
+      .orderBy('date');
 
     res.json(availability);
   } catch (error) {
@@ -65,7 +65,7 @@ router.get('/:id/courses', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION
     const courses = await db('course_instances')
       .select('*')
       .where({ instructor_id: req.params.id })
-      .orderBy('start_date');
+      .orderBy('date');
 
     res.json(courses);
   } catch (error) {
@@ -77,13 +77,12 @@ router.get('/:id/courses', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION
 // Update instructor availability
 router.post('/:id/availability', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN, UserRole.INSTRUCTOR]), async (req, res: Response) => {
   try {
-    const { start_time, end_time, is_available } = req.body;
+    const { date, is_available } = req.body;
     
     await db('instructor_availability').insert({
       instructor_id: req.params.id,
-      start_time,
-      end_time,
-      is_available,
+      date: date,
+      status: is_available ? 'available' : 'unavailable',
       created_at: new Date(),
       updated_at: new Date()
     });

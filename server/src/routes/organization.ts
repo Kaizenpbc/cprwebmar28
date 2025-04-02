@@ -61,7 +61,7 @@ router.post('/courses', roleMiddleware([UserRole.ORGANIZATION_ADMIN]), async (re
 
     const [courseInstanceId] = await db('course_instances').insert({
       course_number: courseNumber,
-      requested_date: date,
+      date: date,
       organization_id: organizationId,
       course_type_id: courseTypeId,
       instructor_id: instructor.id,
