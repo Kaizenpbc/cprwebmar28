@@ -1,5 +1,8 @@
 {
   "dependencies": {
-    "react-calendar": "^5.1.0"
+    "@types/dotenv": "^6.1.1",
+    "@types/winston": "^2.4.4",
+    "react-calendar": "^5.1.0",
+    "winston": "^3.17.0"
   }
 }

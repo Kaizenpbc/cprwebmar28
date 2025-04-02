@@ -1,94 +1,237 @@
-import express, { Response } from 'express';
-import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth';
-import { pool } from '../db';
+import express, { Response, Request } from 'express';
+import { authMiddleware, roleMiddleware } from '../middleware/auth';
+import { db } from '../config/db';
+import { UserRole } from '../types';
+import logger from '../utils/logger';
+import { AppError } from '../middleware/error';
 
 const router = express.Router();
 
+// Input validation middleware
+const validateCourseType = (req: Request, _res: Response, next: Function) => {
+  const { name, description } = req.body;
+  
+  if (!name || typeof name !== 'string') {
+    throw new AppError('Course type name is required and must be a string', 400);
+  }
+  
+  if (name.length > 100) {
+    throw new AppError('Course type name must be less than 100 characters', 400);
+  }
+  
+  if (description && typeof description !== 'string') {
+    throw new AppError('Description must be a string', 400);
+  }
+  
+  if (description && description.length > 500) {
+    throw new AppError('Description must be less than 500 characters', 400);
+  }
+  
+  next();
+};
+
 // Apply authentication middleware to all routes
-router.use(authenticateToken);
+router.use(authMiddleware);
 
 // Get all course types
-router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]), async (req: Request, res: Response) => {
+  try {
+    const organizationId = req.user?.organizationId;
+    
+    if (!organizationId) {
+      logger.warn('Course types route - No organization ID found in request');
+      res.status(403).json({ message: 'Organization access required' });
+      return;
+    }
+
+    const courseTypes = await db('course_types')
+      .select('*')
+      .where({ organization_id: organizationId })
+      .orderBy('name');
+    
+    res.json(courseTypes);
+  } catch (error) {
+    logger.error('Error fetching course types:', error);
+    throw new AppError('Error fetching course types', 500);
+  }
+});
+
+// Create a new course type
+router.post('/', 
+  roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]),
+  validateCourseType,
+  async (req: Request, res: Response) => {
     try {
-        const result = await pool.query('SELECT * FROM course_types ORDER BY id ASC');
-        res.json(result.rows);
+      const { name, description } = req.body;
+      const organizationId = req.user?.organizationId;
+      
+      if (!organizationId) {
+        logger.warn('Course types route - No organization ID found in request');
+        res.status(403).json({ message: 'Organization access required' });
+        return;
+      }
+      
+      // Check if course type with same name already exists
+      const existingCourseType = await db('course_types')
+        .where({ name, organization_id: organizationId })
+        .first();
+      
+      if (existingCourseType) {
+        throw new AppError('A course type with this name already exists', 409);
+      }
+      
+      const courseType = await db('course_types')
+        .insert({
+          name,
+          description,
+          organization_id: organizationId,
+          created_at: new Date(),
+          updated_at: new Date()
+        })
+        .returning('*')
+        .first();
+
+      if (!courseType) {
+        throw new AppError('Failed to create course type', 500);
+      }
+
+      res.status(201).json(courseType);
     } catch (error) {
-        console.error('Error fetching course types:', error);
-        res.status(500).json({ message: 'Error fetching course types' });
+      logger.error('Error creating course type:', error);
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError('Error creating course type', 500);
     }
 });
 
 // Get course type by ID
-router.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
-    try {
-        const result = await pool.query('SELECT * FROM course_types WHERE id = $1', [req.params.id]);
-        
-        if (result.rows.length === 0) {
-            res.status(404).json({ message: 'Course type not found' });
-            return;
-        }
+router.get('/:id', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]), async (req: Request, res: Response) => {
+  try {
+    const courseType = await db('course_types')
+      .select('*')
+      .where({ id: req.params.id })
+      .first();
 
-        res.json(result.rows[0]);
+    if (!courseType) {
+      throw new AppError('Course type not found', 404);
+    }
+
+    res.json(courseType);
+  } catch (error) {
+    logger.error('Error fetching course type:', error);
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new AppError('Error fetching course type', 500);
+  }
+});
+
+// Update course type
+router.put('/:id', 
+  roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]),
+  validateCourseType,
+  async (req: Request, res: Response) => {
+    try {
+      const { name, description } = req.body;
+      const organizationId = req.user?.organizationId;
+      
+      if (!organizationId) {
+        logger.warn('Course types route - No organization ID found in request');
+        res.status(403).json({ message: 'Organization access required' });
+        return;
+      }
+      
+      // Check if course type exists
+      const existingCourseType = await db('course_types')
+        .where({ id: req.params.id, organization_id: organizationId })
+        .first();
+      
+      if (!existingCourseType) {
+        throw new AppError('Course type not found', 404);
+      }
+      
+      // Check if another course type with same name exists
+      const duplicateCourseType = await db('course_types')
+        .where({ name, organization_id: organizationId })
+        .whereNot({ id: req.params.id })
+        .first();
+      
+      if (duplicateCourseType) {
+        throw new AppError('A course type with this name already exists', 409);
+      }
+      
+      const courseType = await db('course_types')
+        .where({ id: req.params.id, organization_id: organizationId })
+        .update({
+          name,
+          description,
+          updated_at: new Date()
+        })
+        .returning('*')
+        .first();
+
+      if (!courseType) {
+        throw new AppError('Failed to update course type', 500);
+      }
+
+      res.json(courseType);
     } catch (error) {
-        console.error('Error fetching course type:', error);
-        res.status(500).json({ message: 'Error fetching course type' });
+      logger.error('Error updating course type:', error);
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError('Error updating course type', 500);
     }
 });
 
-// Create new course type (sysAdmin only)
-router.post('/', requireRole(['sysAdmin']), async (req: AuthRequest, res: Response): Promise<void> => {
-    try {
-        const { name, description } = req.body;
-        const result = await pool.query(
-            'INSERT INTO course_types (name, description) VALUES ($1, $2) RETURNING *',
-            [name, description]
-        );
-        res.status(201).json(result.rows[0]);
-    } catch (error) {
-        console.error('Error creating course type:', error);
-        res.status(500).json({ message: 'Error creating course type' });
+// Delete course type
+router.delete('/:id', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]), async (req: Request, res: Response) => {
+  try {
+    const organizationId = req.user?.organizationId;
+    
+    if (!organizationId) {
+      logger.warn('Course types route - No organization ID found in request');
+      res.status(403).json({ message: 'Organization access required' });
+      return;
     }
-});
-
-// Update course type (sysAdmin only)
-router.put('/:id', requireRole(['sysAdmin']), async (req: AuthRequest, res: Response): Promise<void> => {
-    try {
-        const { name, description } = req.body;
-        
-        // Check if course type exists
-        const typeCheck = await pool.query('SELECT * FROM course_types WHERE id = $1', [req.params.id]);
-        if (typeCheck.rows.length === 0) {
-            res.status(404).json({ message: 'Course type not found' });
-            return;
-        }
-
-        const result = await pool.query(
-            'UPDATE course_types SET name = $1, description = $2 WHERE id = $3 RETURNING *',
-            [name, description, req.params.id]
-        );
-
-        res.json(result.rows[0]);
-    } catch (error) {
-        console.error('Error updating course type:', error);
-        res.status(500).json({ message: 'Error updating course type' });
+    
+    // Check if course type exists
+    const existingCourseType = await db('course_types')
+      .where({ id: req.params.id, organization_id: organizationId })
+      .first();
+    
+    if (!existingCourseType) {
+      throw new AppError('Course type not found', 404);
     }
-});
-
-// Delete course type (sysAdmin only)
-router.delete('/:id', requireRole(['sysAdmin']), async (req: AuthRequest, res: Response): Promise<void> => {
-    try {
-        const result = await pool.query('DELETE FROM course_types WHERE id = $1 RETURNING *', [req.params.id]);
-        
-        if (result.rows.length === 0) {
-            res.status(404).json({ message: 'Course type not found' });
-            return;
-        }
-
-        res.json({ message: 'Course type deleted successfully' });
-    } catch (error) {
-        console.error('Error deleting course type:', error);
-        res.status(500).json({ message: 'Error deleting course type' });
+    
+    // Check if course type is being used
+    const coursesUsingType = await db('courses')
+      .where({ course_type_id: req.params.id })
+      .first();
+    
+    if (coursesUsingType) {
+      throw new AppError('Cannot delete course type that is being used by courses', 409);
     }
+    
+    const courseType = await db('course_types')
+      .where({ id: req.params.id, organization_id: organizationId })
+      .del()
+      .returning('*')
+      .first();
+
+    if (!courseType) {
+      throw new AppError('Failed to delete course type', 500);
+    }
+
+    res.json({ message: 'Course type deleted successfully' });
+  } catch (error) {
+    logger.error('Error deleting course type:', error);
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new AppError('Error deleting course type', 500);
+  }
 });
 
 export default router; 

@@ -1,103 +1,111 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { Request, Response, NextFunction } from 'express';
-import db from './config/db';
+import { errorHandler } from './middleware/error';
+import logger, { requestLogger, responseLogger, errorLogger } from './utils/logger';
+import { createCrashDump } from './utils/crashDump';
+import { db } from './config/db';
 import monitoringRoutes from './routes/monitoring';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
-import organizationRoutes from './routes/organizations';
+import organizationRoutes from './routes/organization';
 import instructorRoutes from './routes/instructors';
 import instructorRouter from './routes/instructor';
 import courseTypesRouter from './routes/courseTypes';
 import accountingRoutes from './routes/accounting';
 import dashboardRoutes from './routes/dashboard';
+import studentRoutes from './routes/students';
+import attendanceRoutes from './routes/attendance';
+import { apiLimiter, authLimiter } from './middleware/rateLimiter';
 
-// Load environment variables
-dotenv.config();
+// Set default NODE_ENV if not set
+process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 
-export const app = express();
+// Load environment variables based on NODE_ENV
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
+dotenv.config({ path: envFile });
+
+// Log the environment being used
+logger.info(`Loading environment from ${envFile}`);
+
+const app = express();
 const port = process.env.PORT || 9005;
 
 // Middleware
-app.use(cors({
-  origin: ['http://localhost:3000', 'http://192.168.2.97:3000'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}));
+app.use(cors());
 app.use(express.json());
+app.use(requestLogger);
+app.use(responseLogger);
+app.use(errorLogger);
+
+// Apply rate limiting
+app.use('/api/', apiLimiter);
+app.use('/api/auth', authLimiter);
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/organizations', organizationRoutes);
 app.use('/api/instructor', instructorRouter);
-app.use('/api/monitoring', monitoringRoutes);
+app.use('/api/instructors', instructorRoutes);
+app.use('/api/organization', organizationRoutes);
 app.use('/api/course-types', courseTypesRouter);
+app.use('/api/students', studentRoutes);
+app.use('/api/attendance', attendanceRoutes);
+app.use('/api/monitoring', monitoringRoutes);
 app.use('/api/accounting', accountingRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/instructors', instructorRoutes);
 
-// Test endpoint with DB check
-app.get('/api/test', async (req: Request, res: Response) => {
-    try {
-        // Test database connection
-        await db.raw('SELECT 1');
-        res.json({ 
-            message: 'Server is running successfully!',
-            dbStatus: 'Database connection successful'
-        });
-    } catch (error) {
-        console.error('Database connection error:', error);
-        res.status(500).json({ 
-            message: 'Server is running but database connection failed',
-            error: error instanceof Error ? error.message : 'Unknown error'
-        });
-    }
+// Health check endpoint
+app.get('/health', (_req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
+    database: 'connected'
+  });
 });
 
-// Enhanced error handling middleware
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-    const timestamp = new Date().toISOString();
-    console.error(`[${timestamp}] Server Error:`, {
-        message: err.message,
-        stack: err.stack,
-        path: req.path,
-        method: req.method,
-        body: req.body,
-        query: req.query
-    });
+// Error handling
+app.use(errorHandler);
 
-    res.status(500).json({
-        status: 'error',
-        message: 'Internal server error',
-        timestamp
-    });
-});
+// Database connection and server startup
+const startServer = async () => {
+  try {
+    // Test database connection
+    await db.raw('SELECT NOW()');
+    logger.info('Database connected successfully');
 
-// Health check endpoint with enhanced logging
-app.get('/api/health', (req: Request, res: Response) => {
-    const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] Health check requested`);
-    res.json({ 
-        status: 'ok', 
-        timestamp,
-        uptime: process.uptime(),
-        memory: process.memoryUsage()
+    app.listen(port, () => {
+      logger.info(`Server is running on port ${port} in ${process.env.NODE_ENV} mode`);
     });
-});
+  } catch (err) {
+    logger.error('Failed to start server:', {
+      error: err,
+      stack: err instanceof Error ? err.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    createCrashDump(err as Error);
+    process.exit(1);
+  }
+};
 
-// Test database connection
-db.raw('SELECT 1')
+// Handle shutdown gracefully
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM received. Shutting down gracefully...');
+  db.destroy()
     .then(() => {
-        console.log('Database connected successfully');
+      logger.info('Database connection closed.');
+      process.exit(0);
     })
-    .catch((err) => {
-        console.error('Database connection error:', err);
+    .catch((err: Error) => {
+      logger.error('Error during shutdown:', {
+        error: err,
+        stack: err.stack,
+        timestamp: new Date().toISOString()
+      });
+      createCrashDump(err);
+      process.exit(1);
     });
+});
 
-// Start server
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-}); 
+startServer(); 

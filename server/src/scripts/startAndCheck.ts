@@ -123,7 +123,7 @@ async function checkAuth() {
             console.log('Token verification:', verifyData);
 
             // Test protected endpoint access
-            const protectedResponse = await fetch('http://localhost:9005/api/instructor/courses', {
+            const protectedResponse = await fetch('http://localhost:9005/instructor/courses', {
                 headers: { 'Authorization': `Bearer ${data.token}` }
             });
             if (protectedResponse.ok) {

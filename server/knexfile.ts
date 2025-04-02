@@ -9,17 +9,21 @@ const config: { [key: string]: Knex.Config } = {
     client: 'pg',
     connection: {
       host: process.env.DB_HOST || 'localhost',
-      user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME || 'educational_system',
-      port: Number(process.env.DB_PORT) || 5432
+      user: process.env.DB_USER || 'cpr_web_user',
+      password: process.env.DB_PASSWORD || 'cpr_web_password',
+      database: process.env.DB_NAME || 'cpr_web',
+      port: parseInt(process.env.DB_PORT || '5432'),
+    },
+    pool: {
+      min: 2,
+      max: 10
     },
     migrations: {
-      directory: path.resolve(__dirname, 'src/migrations'),
+      directory: './src/migrations',
       extension: 'ts'
     },
     seeds: {
-      directory: path.resolve(__dirname, 'src/seeds'),
+      directory: './src/seeds',
       extension: 'ts'
     }
   },
@@ -30,12 +34,15 @@ const config: { [key: string]: Knex.Config } = {
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      port: Number(process.env.DB_PORT) || 5432,
-      ssl: { rejectUnauthorized: false }
+      port: parseInt(process.env.DB_PORT || '5432'),
+    },
+    pool: {
+      min: 2,
+      max: 10
     },
     migrations: {
-      directory: path.resolve(__dirname, 'dist/migrations'),
-      extension: 'js'
+      directory: './src/migrations',
+      extension: 'ts'
     },
     seeds: {
       directory: path.resolve(__dirname, 'dist/seeds'),

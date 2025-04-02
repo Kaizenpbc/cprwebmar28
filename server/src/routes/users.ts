@@ -1,85 +1,78 @@
-import express, { Request, Response } from 'express';
-import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth';
-import { pool } from '../db';
+import express, { Response } from 'express';
+import { authMiddleware, roleMiddleware } from '../middleware/auth';
+import { db } from '../config/db';
+import { UserRole } from '../types';
+import logger from '../utils/logger';
 
 const router = express.Router();
 
-// Apply authentication middleware to all routes
-router.use(authenticateToken);
-
-// Get all users (sysAdmin and orgAdmin only)
-router.get('/', requireRole(['sysAdmin', 'orgAdmin']), async (req: AuthRequest, res: Response): Promise<void> => {
-    try {
-        const result = await pool.query('SELECT * FROM users ORDER BY id ASC');
-        res.json(result.rows);
-    } catch (error) {
-        console.error('Error fetching users:', error);
-        res.status(500).json({ message: 'Error fetching users' });
-    }
+// Get all users (admin and organization admin only)
+router.get('/', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]), async (_, res: Response): Promise<void> => {
+  try {
+    const users = await db('users')
+      .select('id', 'email', 'first_name', 'last_name', 'role', 'organization_id')
+      .orderBy('created_at', 'desc');
+    
+    res.json(users);
+  } catch (error) {
+    logger.error('Error fetching users:', error);
+    res.status(500).json({ message: 'Error fetching users' });
+  }
 });
 
 // Get user by ID
-router.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
-    try {
-        // Users can only view their own profile unless they are sysAdmin or orgAdmin
-        if (req.user.role !== 'sysAdmin' && req.user.role !== 'orgAdmin' && req.user.userId !== parseInt(req.params.id)) {
-            res.status(403).json({ message: 'Insufficient permissions' });
-            return;
-        }
+router.get('/:id', authMiddleware, async (req, res: Response): Promise<void> => {
+  try {
+    const [user] = await db('users')
+      .select('id', 'email', 'first_name', 'last_name', 'role', 'organization_id')
+      .where({ id: req.params.id })
+      .first();
 
-        const result = await pool.query('SELECT * FROM users WHERE id = $1', [req.params.id]);
-        
-        if (result.rows.length === 0) {
-            res.status(404).json({ message: 'User not found' });
-            return;
-        }
-
-        res.json(result.rows[0]);
-    } catch (error) {
-        console.error('Error fetching user:', error);
-        res.status(500).json({ message: 'Error fetching user' });
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
     }
+
+    res.json(user);
+  } catch (error) {
+    logger.error('Error fetching user:', error);
+    res.status(500).json({ message: 'Error fetching user' });
+  }
 });
 
-// Update user (sysAdmin only)
-router.put('/:id', requireRole(['sysAdmin']), async (req: AuthRequest, res: Response): Promise<void> => {
-    try {
-        const { email, role, organization_id } = req.body;
-        
-        // Check if user exists
-        const userCheck = await pool.query('SELECT * FROM users WHERE id = $1', [req.params.id]);
-        if (userCheck.rows.length === 0) {
-            res.status(404).json({ message: 'User not found' });
-            return;
-        }
+// Update user
+router.put('/:id', authMiddleware, async (req, res: Response): Promise<void> => {
+  try {
+    const { firstName, lastName, email } = req.body;
+    
+    await db('users')
+      .where({ id: req.params.id })
+      .update({
+        first_name: firstName,
+        last_name: lastName,
+        email,
+        updated_at: new Date()
+      });
 
-        const result = await pool.query(
-            'UPDATE users SET email = $1, role = $2, organization_id = $3 WHERE id = $4 RETURNING *',
-            [email, role, organization_id, req.params.id]
-        );
-
-        res.json(result.rows[0]);
-    } catch (error) {
-        console.error('Error updating user:', error);
-        res.status(500).json({ message: 'Error updating user' });
-    }
+    res.json({ message: 'User updated successfully' });
+  } catch (error) {
+    logger.error('Error updating user:', error);
+    res.status(500).json({ message: 'Error updating user' });
+  }
 });
 
-// Delete user (sysAdmin only)
-router.delete('/:id', requireRole(['sysAdmin']), async (req: AuthRequest, res: Response): Promise<void> => {
-    try {
-        const result = await pool.query('DELETE FROM users WHERE id = $1 RETURNING *', [req.params.id]);
-        
-        if (result.rows.length === 0) {
-            res.status(404).json({ message: 'User not found' });
-            return;
-        }
+// Delete user
+router.delete('/:id', roleMiddleware([UserRole.ADMIN]), async (req, res: Response): Promise<void> => {
+  try {
+    await db('users')
+      .where({ id: req.params.id })
+      .del();
 
-        res.json({ message: 'User deleted successfully' });
-    } catch (error) {
-        console.error('Error deleting user:', error);
-        res.status(500).json({ message: 'Error deleting user' });
-    }
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    logger.error('Error deleting user:', error);
+    res.status(500).json({ message: 'Error deleting user' });
+  }
 });
 
 export default router; 

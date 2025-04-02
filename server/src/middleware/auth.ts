@@ -1,58 +1,64 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import logger from '../utils/logger';
+import { UserRole } from '../types';
 
-export interface AuthRequest extends Request {
-    user?: any;
+interface JwtPayload {
+  userId: number;
+  email: string;
+  role: UserRole;
+  organizationId?: number;
 }
 
-export const authenticateToken = (req: AuthRequest, res: Response, next: NextFunction): void => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+declare global {
+  namespace Express {
+    interface Request {
+      user?: JwtPayload;
+    }
+  }
+}
 
-    console.log('Auth middleware - Request path:', req.path);
-    console.log('Auth middleware - Has auth header:', !!authHeader);
-    console.log('Auth middleware - Has token:', !!token);
-
+export const authMiddleware = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
-        console.log('Auth middleware - No token provided');
-        res.status(401).json({ message: 'No token provided' });
-        return;
+      res.status(401).json({ message: 'No token provided' });
+      return;
     }
 
-    jwt.verify(token, process.env.JWT_SECRET || 'cpr_secret_key_2024', (err: any, user: any) => {
-        if (err) {
-            console.log('Auth middleware - Token verification failed:', err.message);
-            res.status(403).json({ message: 'Invalid token' });
-            return;
-        }
-        console.log('Auth middleware - Token verified, user:', { 
-            id: user.userId, 
-            role: user.role,
-            portal: user.portal 
-        });
-        req.user = user;
-        next();
-    });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as JwtPayload;
+    req.user = decoded;
+    next();
+  } catch (error) {
+    logger.error('Auth middleware error:', error);
+    res.status(401).json({ message: 'Invalid token' });
+  }
 };
 
-export const requireRole = (roles: string[]) => {
-    return (req: AuthRequest, res: Response, next: NextFunction): void => {
-        console.log('Role middleware - Required roles:', roles);
-        console.log('Role middleware - User role:', req.user?.role);
+export const roleMiddleware = (allowedRoles: UserRole[]) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    try {
+      if (!req.user) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+      }
 
-        if (!req.user) {
-            console.log('Role middleware - No user found in request');
-            res.status(401).json({ message: 'Authentication required' });
-            return;
-        }
+      // Handle case where role is "orgAdmin" instead of "organization_admin"
+      const userRole = (req.user.role as string) === 'orgAdmin' ? UserRole.ORGANIZATION_ADMIN : req.user.role as UserRole;
 
-        if (!roles.includes(req.user.role)) {
-            console.log('Role middleware - Insufficient permissions. User role:', req.user.role);
-            res.status(403).json({ message: 'Insufficient permissions' });
-            return;
-        }
+      if (!allowedRoles.includes(userRole)) {
+        res.status(403).json({ message: 'Forbidden' });
+        return;
+      }
 
-        console.log('Role middleware - Role check passed');
-        next();
-    };
+      next();
+    } catch (error) {
+      logger.error('Role middleware error:', error);
+      res.status(500).json({ message: 'Error checking role' });
+    }
+  };
 }; 

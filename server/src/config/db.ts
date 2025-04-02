@@ -1,21 +1,15 @@
+import { Pool } from 'pg';
 import knex from 'knex';
-import dotenv from 'dotenv';
+import knexConfig from '../../knexfile';
 
-dotenv.config();
-
-const db = knex({
-  client: 'pg',
-  connection: {
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME || 'educational_system',
-    port: Number(process.env.DB_PORT) || 5432
-  },
-  pool: {
-    min: 2,
-    max: 10
-  }
+const pool = new Pool({
+  user: process.env.DB_USER || 'postgres',
+  host: process.env.DB_HOST || 'localhost',
+  database: process.env.DB_NAME || 'cpr_web',
+  password: process.env.DB_PASSWORD || 'postgres',
+  port: parseInt(process.env.DB_PORT || '5432'),
 });
 
-export default db; 
+const db = knex(knexConfig.development);
+
+export { pool, db }; 

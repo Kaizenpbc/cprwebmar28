@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 export async function seed(knex: Knex): Promise<void> {
     try {
@@ -19,13 +19,9 @@ export async function seed(knex: Knex): Promise<void> {
         console.log('Inserting organizations...');
         const [org] = await knex('organizations').insert([
             {
-                name: 'Sample Organization',
-                code: 'SAM',
-                status: 'active',
-                settings: JSON.stringify({
-                    billing_address: '123 Main St',
-                    phone: '555-0123'
-                })
+                name: 'CPR Training Center',
+                created_at: new Date(),
+                updated_at: new Date()
             }
         ]).returning('*');
         console.log('Organizations inserted');
@@ -34,19 +30,22 @@ export async function seed(knex: Knex): Promise<void> {
         console.log('Inserting course types...');
         const courseTypes = await knex('course_types').insert([
             {
-                name: 'Basic Life Support',
-                code: 'BLS',
-                description: 'Basic Life Support certification course'
+                name: 'Basic Life Support (BLS)',
+                description: 'Learn basic life support techniques including CPR and AED use',
+                duration_minutes: 180,
+                price: 150.00,
+                organization_id: org.id,
+                created_at: new Date(),
+                updated_at: new Date()
             },
             {
-                name: 'Advanced Cardiac Life Support',
-                code: 'ACL',
-                description: 'Advanced Cardiac Life Support certification course'
-            },
-            {
-                name: 'Pediatric Advanced Life Support',
-                code: 'PAL',
-                description: 'Pediatric Advanced Life Support certification course'
+                name: 'Advanced Cardiac Life Support (ACLS)',
+                description: 'Advanced life support techniques for healthcare providers',
+                duration_minutes: 240,
+                price: 250.00,
+                organization_id: org.id,
+                created_at: new Date(),
+                updated_at: new Date()
             }
         ]).returning('*');
         console.log('Course types inserted');
@@ -63,7 +62,9 @@ export async function seed(knex: Knex): Promise<void> {
                 email: 'admin@example.com',
                 role: 'sysAdmin',
                 organization_id: org.id,
-                is_active: true
+                is_active: true,
+                created_at: new Date(),
+                updated_at: new Date()
             },
             {
                 username: 'instructor1',
@@ -71,7 +72,9 @@ export async function seed(knex: Knex): Promise<void> {
                 email: 'instructor1@example.com',
                 role: 'instructor',
                 organization_id: org.id,
-                is_active: true
+                is_active: true,
+                created_at: new Date(),
+                updated_at: new Date()
             },
             {
                 username: 'orgadmin',
@@ -79,7 +82,9 @@ export async function seed(knex: Knex): Promise<void> {
                 email: 'orgadmin@example.com',
                 role: 'orgAdmin',
                 organization_id: org.id,
-                is_active: true
+                is_active: true,
+                created_at: new Date(),
+                updated_at: new Date()
             },
             {
                 username: 'coursemanager',
@@ -87,7 +92,9 @@ export async function seed(knex: Knex): Promise<void> {
                 email: 'coursemanager@example.com',
                 role: 'courseAdmin',
                 organization_id: org.id,
-                is_active: true
+                is_active: true,
+                created_at: new Date(),
+                updated_at: new Date()
             },
             {
                 username: 'student1',
@@ -95,7 +102,9 @@ export async function seed(knex: Knex): Promise<void> {
                 email: 'student1@example.com',
                 role: 'student',
                 organization_id: org.id,
-                is_active: true
+                is_active: true,
+                created_at: new Date(),
+                updated_at: new Date()
             }
         ]).returning('*');
         console.log('Users inserted');
@@ -116,7 +125,9 @@ export async function seed(knex: Knex): Promise<void> {
                 instructor_id: instructor.id,
                 location: 'Room 101',
                 max_students: 10,
-                status: 'scheduled'
+                status: 'scheduled',
+                created_at: new Date(),
+                updated_at: new Date()
             },
             {
                 course_number: '2024-04-15-SAM-ACL',
@@ -126,7 +137,9 @@ export async function seed(knex: Knex): Promise<void> {
                 instructor_id: instructor.id,
                 location: 'Room 202',
                 max_students: 8,
-                status: 'pending'
+                status: 'pending',
+                created_at: new Date(),
+                updated_at: new Date()
             }
         ]).returning('*');
         console.log('Course instances inserted');
@@ -137,12 +150,16 @@ export async function seed(knex: Knex): Promise<void> {
             {
                 instructor_id: instructor.id,
                 date: '2024-04-01',
-                status: 'scheduled'
+                status: 'scheduled',
+                created_at: new Date(),
+                updated_at: new Date()
             },
             {
                 instructor_id: instructor.id,
                 date: '2024-04-15',
-                status: 'available'
+                status: 'available',
+                created_at: new Date(),
+                updated_at: new Date()
             }
         ]);
         console.log('Instructor availability inserted');
@@ -153,17 +170,23 @@ export async function seed(knex: Knex): Promise<void> {
             {
                 name: 'John Doe',
                 email: 'john@example.com',
-                organization_id: org.id
+                organization_id: org.id,
+                created_at: new Date(),
+                updated_at: new Date()
             },
             {
                 name: 'Jane Smith',
                 email: 'jane@example.com',
-                organization_id: org.id
+                organization_id: org.id,
+                created_at: new Date(),
+                updated_at: new Date()
             },
             {
                 name: 'Bob Wilson',
                 email: 'bob@example.com',
-                organization_id: org.id
+                organization_id: org.id,
+                created_at: new Date(),
+                updated_at: new Date()
             }
         ]).returning('*');
         console.log('Students inserted');
@@ -175,19 +198,25 @@ export async function seed(knex: Knex): Promise<void> {
                 course_instance_id: courseInstances[0].id,
                 student_id: students[0].id,
                 attended: true,
-                certification_issued: true
+                certification_issued: true,
+                created_at: new Date(),
+                updated_at: new Date()
             },
             {
                 course_instance_id: courseInstances[0].id,
                 student_id: students[1].id,
                 attended: false,
-                certification_issued: false
+                certification_issued: false,
+                created_at: new Date(),
+                updated_at: new Date()
             },
             {
                 course_instance_id: courseInstances[1].id,
                 student_id: students[2].id,
                 attended: false,
-                certification_issued: false
+                certification_issued: false,
+                created_at: new Date(),
+                updated_at: new Date()
             }
         ]);
         console.log('Student attendance inserted');
@@ -199,19 +228,25 @@ export async function seed(knex: Knex): Promise<void> {
                 course_instance_id: courseInstances[0].id,
                 student_id: students[0].id,
                 registration_date: new Date(),
-                is_confirmed: true
+                is_confirmed: true,
+                created_at: new Date(),
+                updated_at: new Date()
             },
             {
                 course_instance_id: courseInstances[0].id,
                 student_id: students[1].id,
                 registration_date: new Date(),
-                is_confirmed: false
+                is_confirmed: false,
+                created_at: new Date(),
+                updated_at: new Date()
             },
             {
                 course_instance_id: courseInstances[1].id,
                 student_id: students[2].id,
                 registration_date: new Date(),
-                is_confirmed: false
+                is_confirmed: false,
+                created_at: new Date(),
+                updated_at: new Date()
             }
         ]);
         console.log('Student registrations inserted');
