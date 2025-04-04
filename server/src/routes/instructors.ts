@@ -1,7 +1,7 @@
 import express, { Response } from 'express';
 import { authMiddleware, roleMiddleware } from '../middleware/auth';
 import { db } from '../config/db';
-import { UserRole } from '../types';
+import { UserRole } from '../types/user';
 import logger from '../utils/logger';
 
 const router = express.Router();
@@ -10,7 +10,7 @@ const router = express.Router();
 router.use(authMiddleware);
 
 // Get all instructors
-router.get('/', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]), async (_, res: Response) => {
+router.get('/', roleMiddleware([UserRole.SYSADMIN, UserRole.ORGADMIN]), async (_, res: Response) => {
   try {
     const instructors = await db('users')
       .select('*')
@@ -25,9 +25,9 @@ router.get('/', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]), a
 });
 
 // Get instructor by ID
-router.get('/:id', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN, UserRole.INSTRUCTOR]), async (req, res: Response) => {
+router.get('/:id', roleMiddleware([UserRole.SYSADMIN, UserRole.ORGADMIN, UserRole.INSTRUCTOR]), async (req, res: Response) => {
   try {
-    const [instructor] = await db('users')
+    const instructor = await db('users')
       .select('*')
       .where({ id: req.params.id, role: UserRole.INSTRUCTOR })
       .first();
@@ -45,7 +45,7 @@ router.get('/:id', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN, 
 });
 
 // Get instructor availability
-router.get('/:id/availability', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN, UserRole.INSTRUCTOR]), async (req, res: Response) => {
+router.get('/:id/availability', roleMiddleware([UserRole.SYSADMIN, UserRole.ORGADMIN, UserRole.INSTRUCTOR]), async (req, res: Response) => {
   try {
     const availability = await db('instructor_availability')
       .select('*')
@@ -60,12 +60,12 @@ router.get('/:id/availability', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZ
 });
 
 // Get instructor courses
-router.get('/:id/courses', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN, UserRole.INSTRUCTOR]), async (req, res: Response) => {
+router.get('/:id/courses', roleMiddleware([UserRole.SYSADMIN, UserRole.ORGADMIN, UserRole.INSTRUCTOR]), async (req, res: Response) => {
   try {
     const courses = await db('course_instances')
       .select('*')
       .where({ instructor_id: req.params.id })
-      .orderBy('date');
+      .orderBy('requested_date');
 
     res.json(courses);
   } catch (error) {
@@ -75,7 +75,7 @@ router.get('/:id/courses', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION
 });
 
 // Update instructor availability
-router.post('/:id/availability', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN, UserRole.INSTRUCTOR]), async (req, res: Response) => {
+router.post('/:id/availability', roleMiddleware([UserRole.SYSADMIN, UserRole.ORGADMIN, UserRole.INSTRUCTOR]), async (req, res: Response) => {
   try {
     const { date, is_available } = req.body;
     

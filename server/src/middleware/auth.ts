@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import logger from '../utils/logger';
-import { UserRole } from '../types';
+import { UserRole } from '../types/user';
 
 interface JwtPayload {
   id: number;
@@ -93,8 +93,7 @@ export const roleMiddleware = (allowedRoles: UserRole[]) => {
         return;
       }
 
-      // Handle case where role is "orgAdmin" instead of "organization_admin"
-      const userRole = (req.user.role as string) === 'orgAdmin' ? UserRole.ORGANIZATION_ADMIN : req.user.role as UserRole;
+      const userRole = req.user.role as UserRole;
 
       if (!allowedRoles.includes(userRole)) {
         res.status(403).json({ message: 'Forbidden' });

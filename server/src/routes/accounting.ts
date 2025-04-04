@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import { authMiddleware, roleMiddleware } from '../middleware/auth';
 import { db } from '../config/db';
-import { UserRole } from '../types';
+import { UserRole } from '../types/user';
 import logger from '../utils/logger';
 
 const router = express.Router();
@@ -10,7 +10,7 @@ const router = express.Router();
 router.use(authMiddleware);
 
 // Get all transactions
-router.get('/', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]), async (_req: Request, res: Response): Promise<void> => {
+router.get('/', roleMiddleware([UserRole.SYSADMIN, UserRole.ORGADMIN]), async (_req: Request, res: Response): Promise<void> => {
   try {
     const transactions = await db('transactions')
       .select('*')
@@ -24,7 +24,7 @@ router.get('/', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]), a
 });
 
 // Create a new transaction
-router.post('/', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]), async (req: Request, res: Response) => {
+router.post('/', roleMiddleware([UserRole.SYSADMIN, UserRole.ORGADMIN]), async (req: Request, res: Response) => {
   try {
     const { amount, type, description, organization_id } = req.body;
     
@@ -47,7 +47,7 @@ router.post('/', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]), 
 });
 
 // Get transaction by ID
-router.get('/:id', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]), async (req: Request, res: Response): Promise<void> => {
+router.get('/:id', roleMiddleware([UserRole.SYSADMIN, UserRole.ORGADMIN]), async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const transaction = await db('transactions')
@@ -68,7 +68,7 @@ router.get('/:id', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN])
 });
 
 // Update transaction
-router.put('/:id', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]), async (req: Request, res: Response): Promise<void> => {
+router.put('/:id', roleMiddleware([UserRole.SYSADMIN, UserRole.ORGADMIN]), async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const updates = req.body;
@@ -91,7 +91,7 @@ router.put('/:id', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN])
 });
 
 // Delete transaction
-router.delete('/:id', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]), async (req: Request, res: Response): Promise<void> => {
+router.delete('/:id', roleMiddleware([UserRole.SYSADMIN, UserRole.ORGADMIN]), async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const deleted = await db('transactions')

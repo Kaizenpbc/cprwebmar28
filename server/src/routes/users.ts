@@ -1,13 +1,13 @@
 import express, { Response } from 'express';
 import { authMiddleware, roleMiddleware } from '../middleware/auth';
 import { db } from '../config/db';
-import { UserRole } from '../types';
+import { UserRole } from '../types/user';
 import logger from '../utils/logger';
 
 const router = express.Router();
 
 // Get all users (admin and organization admin only)
-router.get('/', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]), async (_, res: Response): Promise<void> => {
+router.get('/', roleMiddleware([UserRole.SYSADMIN, UserRole.ORGADMIN]), async (_, res: Response): Promise<void> => {
   try {
     const users = await db('users')
       .select('id', 'email', 'first_name', 'last_name', 'role', 'organization_id')
@@ -62,7 +62,7 @@ router.put('/:id', authMiddleware, async (req, res: Response): Promise<void> => 
 });
 
 // Delete user
-router.delete('/:id', roleMiddleware([UserRole.ADMIN]), async (req, res: Response): Promise<void> => {
+router.delete('/:id', roleMiddleware([UserRole.SYSADMIN]), async (req, res: Response): Promise<void> => {
   try {
     await db('users')
       .where({ id: req.params.id })

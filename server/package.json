@@ -19,7 +19,12 @@
     "test:api": "ts-node src/scripts/test-api.ts",
     "test:org-login": "ts-node src/scripts/test-org-login.ts",
     "test:all-portals": "ts-node src/scripts/test-all-portals.ts",
-    "check:org-admin": "ts-node src/scripts/check-org-admin.ts"
+    "check:org-admin": "ts-node src/scripts/check-org-admin.ts",
+    "check:instructors": "ts-node src/scripts/check-instructors.ts",
+    "test:instructor-login": "ts-node src/scripts/test-instructor-login.ts",
+    "test:instructor-endpoints": "ts-node src/scripts/test-instructor-endpoints.ts",
+    "test:instructor-functions": "ts-node src/scripts/test-instructor-functions.ts",
+    "test:client-availability": "ts-node src/scripts/test-client-availability.ts"
   },
   "keywords": [],
   "author": "",

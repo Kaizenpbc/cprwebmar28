@@ -1,7 +1,7 @@
 import express, { Response, Request } from 'express';
 import { authMiddleware, roleMiddleware } from '../middleware/auth';
 import { db } from '../config/db';
-import { UserRole } from '../types';
+import { UserRole } from '../types/user';
 import logger from '../utils/logger';
 import { AppError } from '../middleware/error';
 
@@ -34,7 +34,7 @@ const validateCourseType = (req: Request, _res: Response, next: Function) => {
 router.use(authMiddleware);
 
 // Get all course types
-router.get('/', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]), async (req: Request, res: Response) => {
+router.get('/', roleMiddleware([UserRole.SYSADMIN, UserRole.ORGADMIN]), async (req: Request, res: Response) => {
   try {
     const organizationId = req.user?.organizationId;
     
@@ -58,7 +58,7 @@ router.get('/', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]), a
 
 // Create a new course type
 router.post('/', 
-  roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]),
+  roleMiddleware([UserRole.SYSADMIN, UserRole.ORGADMIN]),
   validateCourseType,
   async (req: Request, res: Response) => {
     try {
@@ -106,7 +106,7 @@ router.post('/',
 });
 
 // Get course type by ID
-router.get('/:id', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]), async (req: Request, res: Response) => {
+router.get('/:id', roleMiddleware([UserRole.SYSADMIN, UserRole.ORGADMIN]), async (req: Request, res: Response) => {
   try {
     const courseType = await db('course_types')
       .select('*')
@@ -129,7 +129,7 @@ router.get('/:id', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN])
 
 // Update course type
 router.put('/:id', 
-  roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]),
+  roleMiddleware([UserRole.SYSADMIN, UserRole.ORGADMIN]),
   validateCourseType,
   async (req: Request, res: Response) => {
     try {
@@ -186,7 +186,7 @@ router.put('/:id',
 });
 
 // Delete course type
-router.delete('/:id', roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]), async (req: Request, res: Response) => {
+router.delete('/:id', roleMiddleware([UserRole.SYSADMIN, UserRole.ORGADMIN]), async (req: Request, res: Response) => {
   try {
     const organizationId = req.user?.organizationId;
     

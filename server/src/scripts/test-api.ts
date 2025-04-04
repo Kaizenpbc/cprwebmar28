@@ -11,6 +11,12 @@ const API_URL = process.env.API_URL || 'http://localhost:9005';
 // Test users
 const TEST_USERS = [
   {
+    email: 'admin@example.com',
+    password: 'password123',
+    portal: 'admin',
+    expectedRole: 'sysAdmin'
+  },
+  {
     email: 'instructor1@example.com',
     password: 'password123',
     portal: 'instructor',
@@ -21,21 +27,15 @@ const TEST_USERS = [
     password: 'password123',
     portal: 'student',
     expectedRole: 'student'
-  },
-  {
-    email: 'admin@example.com',
-    password: 'password123',
-    portal: 'admin',
-    expectedRole: 'sysAdmin'
   }
 ];
 
 // API endpoints to test
 const ENDPOINTS = [
   { path: '/api/auth/me', method: 'GET', requiresAuth: true },
-  { path: '/api/organizations', method: 'GET', requiresAuth: true },
+  { path: '/api/organizations', method: 'GET', requiresAuth: true, adminOnly: true },
   { path: '/api/course-types', method: 'GET', requiresAuth: true },
-  { path: '/api/instructors/availability', method: 'GET', requiresAuth: true },
+  { path: '/api/instructor/availability', method: 'GET', requiresAuth: true },
   { path: '/api/course-instances', method: 'GET', requiresAuth: true }
 ];
 
@@ -54,53 +54,35 @@ async function testAPI() {
         portal: user.portal
       });
       
-      if (loginResponse.status !== 200) {
-        logger.error(`❌ Login failed: ${loginResponse.status}`);
-        continue;
-      }
-      
-      const { token, user: userData } = loginResponse.data;
-      logger.info(`✅ Login successful. User role: ${userData.role}`);
+      const token = loginResponse.data.token;
+      logger.info(`✅ Login successful. User role: ${loginResponse.data.user.role}`);
       
       // Test each endpoint
       for (const endpoint of ENDPOINTS) {
+        // Skip admin-only endpoints for non-admin users
+        if (endpoint.adminOnly && user.expectedRole !== 'sysAdmin') {
+          logger.info(`\nSkipping ${endpoint.method} ${endpoint.path} (admin only)`);
+          continue;
+        }
+        
+        logger.info(`\nTesting ${endpoint.method} ${endpoint.path}...`);
         try {
-          logger.info(`\nTesting ${endpoint.method} ${endpoint.path}...`);
-          
-          const config = {
+          const response = await axios({
             method: endpoint.method,
             url: `${API_URL}${endpoint.path}`,
             headers: endpoint.requiresAuth ? { Authorization: `Bearer ${token}` } : {}
-          };
+          });
           
-          const response = await axios(config);
-          
-          if (response.status >= 200 && response.status < 300) {
-            logger.info(`✅ Request successful (${response.status})`);
-            
-            // Log response data structure
-            if (response.data) {
-              if (Array.isArray(response.data)) {
-                logger.info(`✅ Response contains array with ${response.data.length} items`);
-              } else if (typeof response.data === 'object') {
-                logger.info(`✅ Response contains object with keys: ${Object.keys(response.data).join(', ')}`);
-              } else {
-                logger.info(`✅ Response data type: ${typeof response.data}`);
-              }
-            }
-          } else {
-            logger.error(`❌ Unexpected status code: ${response.status}`);
+          logger.info(`✅ Request successful (${response.status})`);
+          if (response.data) {
+            logger.info('✅ Response contains data');
           }
-        } catch (error) {
-          if (error.response) {
-            logger.error(`❌ Request failed: ${error.response.status} - ${JSON.stringify(error.response.data)}`);
-          } else {
-            logger.error(`❌ Request error: ${error.message}`);
-          }
+        } catch (error: any) {
+          logger.error(`❌ Request failed: ${error.response?.status || 'unknown'} - ${JSON.stringify(error.response?.data || error.message)}`);
         }
       }
-    } catch (error) {
-      logger.error(`❌ Error testing as ${user.email}: ${error.message}`);
+    } catch (error: any) {
+      logger.error(`❌ Test failed for ${user.email}: ${error.message}`);
     }
   }
   
@@ -109,6 +91,6 @@ async function testAPI() {
 
 // Run the tests
 testAPI().catch(error => {
-  logger.error('Test script error:', error);
+  logger.error('Test suite failed:', error);
   process.exit(1);
 }); 

@@ -1,7 +1,7 @@
 import express, { Response, Request } from 'express';
 import { authMiddleware, roleMiddleware } from '../middleware/auth';
 import { db } from '../config/db';
-import { UserRole } from '../types';
+import { UserRole } from '../types/user';
 import logger from '../utils/logger';
 
 const router = express.Router();
@@ -10,7 +10,7 @@ const router = express.Router();
 router.use(authMiddleware);
 
 // Get upcoming classes
-router.get('/upcoming-classes', roleMiddleware([UserRole.INSTRUCTOR]), async (req: Request, res: Response): Promise<void> => {
+router.get('/upcoming-classes', roleMiddleware([UserRole.INSTRUCTOR] as UserRole[]), async (req: Request, res: Response): Promise<void> => {
   try {
     const upcomingClasses = await db('course_instances')
       .select('*')
@@ -27,7 +27,7 @@ router.get('/upcoming-classes', roleMiddleware([UserRole.INSTRUCTOR]), async (re
 });
 
 // Get quick stats
-router.get('/quick-stats', roleMiddleware([UserRole.INSTRUCTOR]), async (req: Request, res: Response): Promise<void> => {
+router.get('/quick-stats', roleMiddleware([UserRole.INSTRUCTOR] as UserRole[]), async (req: Request, res: Response): Promise<void> => {
   try {
     const stats = await db('course_instances')
       .select(
@@ -46,7 +46,7 @@ router.get('/quick-stats', roleMiddleware([UserRole.INSTRUCTOR]), async (req: Re
 });
 
 // Get recent activity
-router.get('/recent-activity', roleMiddleware([UserRole.INSTRUCTOR]), async (req: Request, res: Response): Promise<void> => {
+router.get('/recent-activity', roleMiddleware([UserRole.INSTRUCTOR] as UserRole[]), async (req: Request, res: Response): Promise<void> => {
   try {
     const recentActivity = await db('course_instances')
       .select('*')
