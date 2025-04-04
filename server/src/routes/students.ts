@@ -1,158 +1,127 @@
-import express from 'express';
-import { db } from '../db';
+import { Router, Request, Response } from 'express';
 import { authMiddleware } from '../middleware/auth';
 import { roleMiddleware } from '../middleware/role';
-import { UserRole } from '../types';
-import logger from '../utils/logger';
-import { AppError } from '../middleware/error';
+import { UserRole, JwtPayload } from '../types/user';
+import { db } from '../db';
 
-const router = express.Router();
+const router = Router();
 
 // Get all students for an organization
-router.get('/', authMiddleware, roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]), async (req, res, next) => {
-  try {
-    const organizationId = req.user?.organizationId;
-    
-    if (!organizationId) {
-      throw new AppError('Organization ID not found', 400);
+router.get('/', authMiddleware, roleMiddleware([UserRole.SYSADMIN, UserRole.ORGADMIN]), async (req: Request & { user?: JwtPayload }, res: Response) => {
+    try {
+        if (!req.user?.organizationId) {
+            return res.status(403).json({ message: 'Organization ID not found' });
+        }
+
+        const students = await db.query(
+            'SELECT * FROM students WHERE organization_id = $1',
+            [req.user.organizationId]
+        );
+        return res.json(students.rows);
+    } catch (error) {
+        console.error('Error fetching students:', error);
+        return res.status(500).json({ message: 'Error fetching students' });
     }
-
-    const result = await db.query(
-      'SELECT * FROM students WHERE organization_id = $1 ORDER BY last_name, first_name',
-      [organizationId]
-    );
-
-    logger.info('Students retrieved successfully', {
-      organizationId,
-      count: result.rows.length
-    });
-
-    res.json(result.rows);
-  } catch (err) {
-    next(err);
-  }
 });
 
-// Get a specific student
-router.get('/:id', authMiddleware, roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]), async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const organizationId = req.user?.organizationId;
+// Get a single student by ID
+router.get('/:id', authMiddleware, roleMiddleware([UserRole.SYSADMIN, UserRole.ORGADMIN]), async (req: Request & { user?: JwtPayload }, res: Response) => {
+    try {
+        if (!req.user?.organizationId) {
+            return res.status(403).json({ message: 'Organization ID not found' });
+        }
 
-    if (!organizationId) {
-      throw new AppError('Organization ID not found', 400);
+        const student = await db.query(
+            'SELECT * FROM students WHERE id = $1 AND organization_id = $2',
+            [req.params.id, req.user.organizationId]
+        );
+        
+        if (student.rows.length === 0) {
+            return res.status(404).json({ message: 'Student not found' });
+        }
+        
+        return res.json(student.rows[0]);
+    } catch (error) {
+        console.error('Error fetching student:', error);
+        return res.status(500).json({ message: 'Error fetching student' });
     }
-
-    const result = await db.query(
-      'SELECT * FROM students WHERE id = $1 AND organization_id = $2',
-      [id, organizationId]
-    );
-
-    if (result.rows.length === 0) {
-      throw new AppError('Student not found', 404);
-    }
-
-    logger.info('Student retrieved successfully', {
-      studentId: id,
-      organizationId
-    });
-
-    res.json(result.rows[0]);
-  } catch (err) {
-    next(err);
-  }
 });
 
 // Create a new student
-router.post('/', authMiddleware, roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]), async (req, res, next) => {
-  try {
-    const { firstName, lastName, email, phone } = req.body;
-    const organizationId = req.user?.organizationId;
+router.post('/', authMiddleware, roleMiddleware([UserRole.SYSADMIN, UserRole.ORGADMIN]), async (req: Request & { user?: JwtPayload }, res: Response) => {
+    try {
+        if (!req.user?.organizationId) {
+            return res.status(403).json({ message: 'Organization ID not found' });
+        }
 
-    if (!organizationId) {
-      throw new AppError('Organization ID not found', 400);
+        const { firstName, lastName, email, phone } = req.body;
+        
+        if (!firstName || !lastName || !email) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        }
+        
+        const student = await db.query(
+            'INSERT INTO students (first_name, last_name, email, phone, organization_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+            [firstName, lastName, email, phone, req.user.organizationId]
+        );
+        
+        return res.status(201).json(student.rows[0]);
+    } catch (error) {
+        console.error('Error creating student:', error);
+        return res.status(500).json({ message: 'Error creating student' });
     }
-
-    const result = await db.query(
-      `INSERT INTO students (first_name, last_name, email, phone, organization_id) 
-       VALUES ($1, $2, $3, $4, $5) 
-       RETURNING *`,
-      [firstName, lastName, email, phone, organizationId]
-    );
-
-    logger.info('Student created successfully', {
-      studentId: result.rows[0].id,
-      organizationId
-    });
-
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    next(err);
-  }
 });
 
 // Update a student
-router.put('/:id', authMiddleware, roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]), async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { firstName, lastName, email, phone } = req.body;
-    const organizationId = req.user?.organizationId;
+router.put('/:id', authMiddleware, roleMiddleware([UserRole.SYSADMIN, UserRole.ORGADMIN]), async (req: Request & { user?: JwtPayload }, res: Response) => {
+    try {
+        if (!req.user?.organizationId) {
+            return res.status(403).json({ message: 'Organization ID not found' });
+        }
 
-    if (!organizationId) {
-      throw new AppError('Organization ID not found', 400);
+        const { firstName, lastName, email, phone } = req.body;
+        
+        if (!firstName && !lastName && !email && !phone) {
+            return res.status(400).json({ message: 'No fields to update' });
+        }
+        
+        const student = await db.query(
+            'UPDATE students SET first_name = COALESCE($1, first_name), last_name = COALESCE($2, last_name), email = COALESCE($3, email), phone = COALESCE($4, phone), updated_at = NOW() WHERE id = $5 AND organization_id = $6 RETURNING *',
+            [firstName, lastName, email, phone, req.params.id, req.user.organizationId]
+        );
+        
+        if (student.rows.length === 0) {
+            return res.status(404).json({ message: 'Student not found' });
+        }
+        
+        return res.json(student.rows[0]);
+    } catch (error) {
+        console.error('Error updating student:', error);
+        return res.status(500).json({ message: 'Error updating student' });
     }
-
-    const result = await db.query(
-      `UPDATE students 
-       SET first_name = $1, last_name = $2, email = $3, phone = $4 
-       WHERE id = $5 AND organization_id = $6 
-       RETURNING *`,
-      [firstName, lastName, email, phone, id, organizationId]
-    );
-
-    if (result.rows.length === 0) {
-      throw new AppError('Student not found', 404);
-    }
-
-    logger.info('Student updated successfully', {
-      studentId: id,
-      organizationId
-    });
-
-    res.json(result.rows[0]);
-  } catch (err) {
-    next(err);
-  }
 });
 
 // Delete a student
-router.delete('/:id', authMiddleware, roleMiddleware([UserRole.ADMIN, UserRole.ORGANIZATION_ADMIN]), async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const organizationId = req.user?.organizationId;
+router.delete('/:id', authMiddleware, roleMiddleware([UserRole.SYSADMIN, UserRole.ORGADMIN]), async (req: Request & { user?: JwtPayload }, res: Response) => {
+    try {
+        if (!req.user?.organizationId) {
+            return res.status(403).json({ message: 'Organization ID not found' });
+        }
 
-    if (!organizationId) {
-      throw new AppError('Organization ID not found', 400);
+        const result = await db.query(
+            'DELETE FROM students WHERE id = $1 AND organization_id = $2',
+            [req.params.id, req.user.organizationId]
+        );
+        
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Student not found' });
+        }
+        
+        return res.status(204).send();
+    } catch (error) {
+        console.error('Error deleting student:', error);
+        return res.status(500).json({ message: 'Error deleting student' });
     }
-
-    const result = await db.query(
-      'DELETE FROM students WHERE id = $1 AND organization_id = $2 RETURNING *',
-      [id, organizationId]
-    );
-
-    if (result.rows.length === 0) {
-      throw new AppError('Student not found', 404);
-    }
-
-    logger.info('Student deleted successfully', {
-      studentId: id,
-      organizationId
-    });
-
-    res.json({ message: 'Student deleted successfully' });
-  } catch (err) {
-    next(err);
-  }
 });
 
 export default router; 

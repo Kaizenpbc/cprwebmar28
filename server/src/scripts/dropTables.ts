@@ -1,4 +1,4 @@
-import { pool } from '../db';
+import { db } from '../config/db';
 
 async function dropTables() {
     try {
@@ -16,14 +16,15 @@ async function dropTables() {
 
         for (const table of tables) {
             console.log(`Dropping table ${table}...`);
-            await pool.query(`DROP TABLE IF EXISTS ${table} CASCADE`);
+            await db.query(`DROP TABLE IF EXISTS ${table} CASCADE`);
         }
 
         console.log('All tables dropped successfully');
     } catch (error) {
         console.error('Error dropping tables:', error);
+        process.exit(1);
     } finally {
-        await pool.end();
+        await db.end();
     }
 }
 

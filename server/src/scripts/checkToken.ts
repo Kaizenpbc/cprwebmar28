@@ -1,25 +1,17 @@
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import { verify } from 'jsonwebtoken';
 
 // Load environment variables
 dotenv.config();
 
+interface TokenData {
+    token: string;
+}
+
 async function checkToken() {
     try {
-        // Get a token through login
-        const response = await fetch('http://localhost:9005/api/auth/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                email: 'instructor1@example.com',
-                password: 'password123',
-                portal: 'instructor'
-            })
-        });
-
-        const data = await response.json();
+        const data = JSON.parse(process.argv[2]) as TokenData;
         const token = data.token;
 
         console.log('\nToken Details:');
@@ -56,7 +48,8 @@ async function checkToken() {
         }
 
     } catch (error) {
-        console.error('Error checking token:', error);
+        console.error('Error:', error);
+        process.exit(1);
     }
 }
 

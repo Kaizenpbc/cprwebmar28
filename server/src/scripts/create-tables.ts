@@ -1,4 +1,4 @@
-import knex from '../config/db';
+import { db } from '../config/db';
 
 async function createTables() {
     try {
@@ -6,7 +6,7 @@ async function createTables() {
 
         // Create enum types
         console.log('Creating enum types...');
-        await knex.raw(`
+        await db.raw(`
             DO $$ BEGIN
                 CREATE TYPE user_role AS ENUM ('instructor', 'student', 'sysAdmin', 'orgAdmin', 'accounting', 'courseAdmin');
                 CREATE TYPE org_status AS ENUM ('active', 'inactive', 'suspended');
@@ -20,7 +20,7 @@ async function createTables() {
 
         // Create organizations table
         console.log('\nCreating organizations table...');
-        await knex.raw(`
+        await db.raw(`
             CREATE TABLE IF NOT EXISTS organizations (
                 id SERIAL PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
@@ -35,7 +35,7 @@ async function createTables() {
 
         // Create users table
         console.log('\nCreating users table...');
-        await knex.raw(`
+        await db.raw(`
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
                 username VARCHAR(255) NOT NULL UNIQUE,
@@ -52,7 +52,7 @@ async function createTables() {
 
         // Create course types table
         console.log('\nCreating course types table...');
-        await knex.raw(`
+        await db.raw(`
             CREATE TABLE IF NOT EXISTS course_types (
                 id SERIAL PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
@@ -66,7 +66,7 @@ async function createTables() {
 
         // Create course instances table
         console.log('\nCreating course instances table...');
-        await knex.raw(`
+        await db.raw(`
             CREATE TABLE IF NOT EXISTS course_instances (
                 id SERIAL PRIMARY KEY,
                 course_number VARCHAR(255) NOT NULL UNIQUE,
@@ -86,7 +86,7 @@ async function createTables() {
 
         // Create instructor availability table
         console.log('\nCreating instructor availability table...');
-        await knex.raw(`
+        await db.raw(`
             CREATE TABLE IF NOT EXISTS instructor_availability (
                 id SERIAL PRIMARY KEY,
                 instructor_id INTEGER REFERENCES users(id) NOT NULL,
@@ -102,7 +102,7 @@ async function createTables() {
 
         // Create students table
         console.log('\nCreating students table...');
-        await knex.raw(`
+        await db.raw(`
             CREATE TABLE IF NOT EXISTS students (
                 id SERIAL PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
@@ -116,7 +116,7 @@ async function createTables() {
 
         // Create student registrations table
         console.log('\nCreating student registrations table...');
-        await knex.raw(`
+        await db.raw(`
             CREATE TABLE IF NOT EXISTS student_registrations (
                 id SERIAL PRIMARY KEY,
                 course_instance_id INTEGER REFERENCES course_instances(id) NOT NULL,
@@ -133,7 +133,7 @@ async function createTables() {
 
         // Create student attendance table
         console.log('\nCreating student attendance table...');
-        await knex.raw(`
+        await db.raw(`
             CREATE TABLE IF NOT EXISTS student_attendance (
                 id SERIAL PRIMARY KEY,
                 course_instance_id INTEGER REFERENCES course_instances(id) NOT NULL,
@@ -150,7 +150,7 @@ async function createTables() {
 
         // Create indexes
         console.log('\nCreating indexes...');
-        await knex.raw(`
+        await db.raw(`
             CREATE INDEX IF NOT EXISTS idx_student_registrations_course_instance ON student_registrations(course_instance_id);
             CREATE INDEX IF NOT EXISTS idx_student_registrations_student ON student_registrations(student_id);
             CREATE INDEX IF NOT EXISTS idx_student_attendance_course_instance ON student_attendance(course_instance_id);
@@ -160,7 +160,7 @@ async function createTables() {
 
         // Create trigger function
         console.log('\nCreating trigger function...');
-        await knex.raw(`
+        await db.raw(`
             CREATE OR REPLACE FUNCTION update_updated_at_column()
             RETURNS TRIGGER AS $$
             BEGIN
@@ -173,7 +173,7 @@ async function createTables() {
 
         // Create triggers
         console.log('\nCreating triggers...');
-        await knex.raw(`
+        await db.raw(`
             CREATE TRIGGER update_student_registrations_updated_at
                 BEFORE UPDATE ON student_registrations
                 FOR EACH ROW

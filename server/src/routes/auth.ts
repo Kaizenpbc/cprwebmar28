@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { db } from '../config/db';
 import { authMiddleware } from '../middleware/auth';
-import { UserRole } from '../types';
+import { UserRole } from '../types/user';
 import logger from '../utils/logger';
 
 const router = express.Router();
@@ -44,7 +44,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
         password: hashedPassword,
         first_name: firstName,
         last_name: lastName,
-        role: UserRole.ORGANIZATION_ADMIN,
+        role: UserRole.ORGADMIN,
         organization_id: organization.id,
         created_at: new Date(),
         updated_at: new Date()
@@ -57,7 +57,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user.id, email, role: UserRole.ORGANIZATION_ADMIN },
+      { userId: user.id, email, role: UserRole.ORGADMIN },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
@@ -69,7 +69,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
         email,
         firstName,
         lastName,
-        role: UserRole.ORGANIZATION_ADMIN,
+        role: UserRole.ORGADMIN,
         organizationId: organization.id
       }
     });
@@ -107,19 +107,16 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
 
     // Check portal access
     if (portal) {
-      let portalRole: string | null = null;
+      let requiredRole: UserRole | null = null;
       switch (portal.toLowerCase()) {
         case 'instructor':
-          portalRole = 'instructor';
+          requiredRole = UserRole.INSTRUCTOR;
           break;
         case 'admin':
-          portalRole = 'sysAdmin';
+          requiredRole = UserRole.SYSADMIN;
           break;
         case 'organization':
-          portalRole = 'orgAdmin';
-          break;
-        case 'course':
-          portalRole = 'courseAdmin';
+          requiredRole = UserRole.ORGADMIN;
           break;
         default:
           logger.warn('Login failed: Invalid portal specified:', portal);
@@ -127,8 +124,8 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
           return;
       }
       
-      if (user.role.toLowerCase() !== portalRole.toLowerCase()) {
-        logger.warn('Login failed: Access denied for portal. User role:', user.role, 'Required role:', portalRole);
+      if (user.role !== requiredRole.toString()) {
+        logger.warn('Login failed: Access denied for portal. User role:', user.role, 'Required role:', requiredRole.toString());
         res.status(403).json({ message: 'Access denied for this portal' });
         return;
       }
@@ -140,8 +137,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
         userId: user.id, 
         email: user.email, 
         role: user.role,
-        organizationId: user.organization_id,
-        username: user.username
+        organizationId: user.organization_id
       },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
@@ -153,10 +149,10 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       user: {
         id: user.id,
         email: user.email,
-        username: user.username,
+        firstName: user.first_name,
+        lastName: user.last_name,
         role: user.role,
-        organizationId: user.organization_id,
-        isActive: user.is_active
+        organizationId: user.organization_id
       }
     });
   } catch (error) {
@@ -193,6 +189,20 @@ router.get('/me', authMiddleware, async (req, res) => {
   } catch (error) {
     logger.error('Error fetching user:', error);
     return res.status(500).json({ message: 'Error fetching user data' });
+  }
+});
+
+// Verify token
+router.get('/verify', authMiddleware, (req: Request, res: Response): void => {
+  try {
+    // If we get here, the token is valid (authMiddleware would have rejected it otherwise)
+    res.json({
+      success: true,
+      user: req.user
+    });
+  } catch (error) {
+    logger.error('Token verification error:', error);
+    res.status(500).json({ message: 'Error verifying token' });
   }
 });
 

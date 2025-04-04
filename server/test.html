@@ -1,0 +1,1680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test Suite</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .endpoint {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        .endpoint-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .method {
+            padding: 5px 10px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+        }
+        .get { background-color: #4CAF50; }
+        .post { background-color: #2196F3; }
+        .put { background-color: #FF9800; }
+        .delete { background-color: #F44336; }
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .request-body {
+            width: 100%;
+            min-height: 100px;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .response {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .response pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+        .history {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .history-item {
+            padding: 5px;
+            border-bottom: 1px solid #ddd;
+            cursor: pointer;
+        }
+        .history-item:hover {
+            background: #e0e0e0;
+        }
+        .error {
+            color: #f44336;
+            margin-top: 10px;
+        }
+        .success {
+            color: #4CAF50;
+            margin-top: 10px;
+        }
+        .query-params {
+            margin-bottom: 10px;
+        }
+        .format-options {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>API Test Suite</h1>
+        
+        <div class="section">
+            <h2>Authentication</h2>
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span>/api/auth/login</span>
+                    <button onclick="testLogin()">Test</button>
+                </div>
+                <textarea class="request-body" id="loginBody">{
+    "email": "test@example.com",
+    "password": "password123",
+    "portal": "instructor"
+}</textarea>
+                <div class="response" id="loginResponse"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Users</h2>
+            <div class="endpoint">
+                <h3>Get Users</h3>
+                <button onclick="testGetUsers()">Test GET /api/users</button>
+                <pre id="usersResult"></pre>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Organizations</h2>
+            <div class="endpoint">
+                <h3>Get Organizations</h3>
+                <button onclick="testGetOrganizations()">Test GET /api/organizations</button>
+                <pre id="organizationsResult"></pre>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Courses</h2>
+            <div class="endpoint">
+                <h3>Get Courses</h3>
+                <button onclick="testGetCourses()">Test GET /api/courses</button>
+                <pre id="coursesResult"></pre>
+            </div>
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span>/api/course-types</span>
+                    <button onclick="testGetCourseTypes()">Test</button>
+                </div>
+                <div class="query-params">
+                    <input type="text" id="courseTypeOrgId" placeholder="Organization ID" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="text" id="courseTypeStatus" placeholder="Status (active/inactive)" style="width: 100%; padding: 8px; margin: 10px 0;">
+                </div>
+                <div class="response" id="courseTypesResponse"></div>
+            </div>
+            
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method put">PUT</span>
+                    <span>/api/course-types/:id</span>
+                    <button onclick="testUpdateCourseType()">Test</button>
+                </div>
+                <input type="text" id="updateCourseTypeId" placeholder="Course Type ID" style="width: 100%; padding: 8px; margin: 10px 0;">
+                <textarea class="request-body" id="updateCourseTypeBody">{
+    "name": "Updated Course Name",
+    "description": "Updated course description",
+    "duration_minutes": 120,
+    "price": 99.99,
+    "status": "active"
+}</textarea>
+                <div class="response" id="updateCourseTypeResponse"></div>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method delete">DELETE</span>
+                    <span>/api/course-types/:id</span>
+                    <button onclick="testDeleteCourseType()">Test</button>
+                </div>
+                <input type="text" id="deleteCourseTypeId" placeholder="Course Type ID" style="width: 100%; padding: 8px; margin: 10px 0;">
+                <div class="response" id="deleteCourseTypeResponse"></div>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span>/api/course-instances</span>
+                    <button onclick="testGetCourseInstances()">Test</button>
+                </div>
+                <div class="response" id="courseInstancesResponse"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Instructors</h2>
+            <div class="endpoint">
+                <h3>Get Instructors</h3>
+                <button onclick="testGetInstructors()">Test GET /api/instructors</button>
+                <pre id="instructorsResult"></pre>
+            </div>
+            <div class="endpoint">
+                <h3>Get Instructor Courses</h3>
+                <button onclick="testGetInstructorCourses()">Test GET /api/instructor/courses</button>
+                <pre id="instructorCoursesResult"></pre>
+            </div>
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span>/api/instructor/availability</span>
+                    <button onclick="testGetInstructorAvailability()">Test</button>
+                </div>
+                <div class="response" id="instructorAvailabilityResponse"></div>
+            </div>
+            
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span>/api/instructor/availability</span>
+                    <button onclick="testCreateInstructorAvailability()">Test</button>
+                </div>
+                <textarea class="request-body" id="createAvailabilityBody">{
+    "instructorId": 1,
+    "date": "2025-04-04",
+    "status": "available"
+}</textarea>
+                <div class="response" id="createAvailabilityResponse"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Students</h2>
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span>/api/students</span>
+                    <button onclick="testGetStudents()">Test</button>
+                </div>
+                <div class="query-params">
+                    <input type="text" id="studentOrgId" placeholder="Organization ID" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="text" id="studentStatus" placeholder="Status (active/inactive)" style="width: 100%; padding: 8px; margin: 10px 0;">
+                </div>
+                <div class="response" id="studentsResponse"></div>
+            </div>
+            
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span>/api/students</span>
+                    <button onclick="testCreateStudent()">Test</button>
+                </div>
+                <textarea class="request-body" id="createStudentBody">{
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "organization_id": 1
+}</textarea>
+                <div class="response" id="createStudentResponse"></div>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method put">PUT</span>
+                    <span>/api/students/:id</span>
+                    <button onclick="testUpdateStudent()">Test</button>
+                </div>
+                <input type="text" id="updateStudentId" placeholder="Student ID" style="width: 100%; padding: 8px; margin: 10px 0;">
+                <textarea class="request-body" id="updateStudentBody">{
+    "name": "Updated Name",
+    "email": "updated.email@example.com",
+    "status": "active"
+}</textarea>
+                <div class="response" id="updateStudentResponse"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Student Registrations</h2>
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span>/api/student/registrations</span>
+                    <button onclick="testGetStudentRegistrations()">Test</button>
+                </div>
+                <div class="query-params">
+                    <input type="text" id="regStudentId" placeholder="Student ID" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="text" id="regCourseInstanceId" placeholder="Course Instance ID" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="text" id="regStatus" placeholder="Status (confirmed/pending)" style="width: 100%; padding: 8px; margin: 10px 0;">
+                </div>
+                <div class="response" id="studentRegistrationsResponse"></div>
+            </div>
+            
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span>/api/student/registrations</span>
+                    <button onclick="testCreateStudentRegistration()">Test</button>
+                </div>
+                <textarea class="request-body" id="createRegistrationBody">{
+    "course_instance_id": 1,
+    "student_id": 1,
+    "registration_date": "2025-04-04T10:00:00Z",
+    "is_confirmed": false
+}</textarea>
+                <div class="response" id="createRegistrationResponse"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Attendance</h2>
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span>/api/attendance/course/:courseId</span>
+                    <button onclick="testGetCourseAttendance()">Test</button>
+                </div>
+                <input type="text" id="attendanceCourseId" placeholder="Course ID" style="width: 100%; padding: 8px; margin: 10px 0;">
+                <div class="response" id="courseAttendanceResponse"></div>
+            </div>
+            
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span>/api/attendance</span>
+                    <button onclick="testCreateAttendance()">Test</button>
+                </div>
+                <textarea class="request-body" id="createAttendanceBody">{
+    "course_instance_id": 1,
+    "student_id": 1,
+    "attended": true,
+    "certification_issued": false
+}</textarea>
+                <div class="response" id="createAttendanceResponse"></div>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method put">PUT</span>
+                    <span>/api/attendance/:id</span>
+                    <button onclick="testUpdateAttendance()">Test</button>
+                </div>
+                <input type="text" id="updateAttendanceId" placeholder="Attendance ID" style="width: 100%; padding: 8px; margin: 10px 0;">
+                <textarea class="request-body" id="updateAttendanceBody">{
+    "attended": true,
+    "certification_issued": true
+}</textarea>
+                <div class="response" id="updateAttendanceResponse"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Course Management</h2>
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span>/api/course-types</span>
+                    <button onclick="testGetCourseTypes()">Test</button>
+                </div>
+                <div class="query-params">
+                    <input type="text" id="courseTypeOrgId" placeholder="Organization ID" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="text" id="courseTypeStatus" placeholder="Status" style="width: 100%; padding: 8px; margin: 10px 0;">
+                </div>
+                <div class="response" id="courseTypesResponse"></div>
+            </div>
+            
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span>/api/course-types</span>
+                    <button onclick="testCreateCourseType()">Test</button>
+                </div>
+                <textarea class="request-body" id="createCourseTypeBody">{
+    "name": "CPR Basic",
+    "description": "Basic CPR certification course",
+    "duration_minutes": 240,
+    "price": 100.00,
+    "organization_id": 1
+}</textarea>
+                <div class="response" id="createCourseTypeResponse"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Dashboard</h2>
+            <div class="endpoint">
+                <h3>Get Dashboard Data</h3>
+                <button onclick="testGetDashboard()">Test GET /api/dashboard</button>
+                <pre id="dashboardResult"></pre>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Accounting</h2>
+            <div class="endpoint">
+                <h3>Get Accounting Data</h3>
+                <button onclick="testGetAccounting()">Test GET /api/accounting</button>
+                <pre id="accountingResult"></pre>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Monitoring</h2>
+            <div class="endpoint">
+                <h3>Get Monitoring Data</h3>
+                <button onclick="testGetMonitoring()">Test GET /api/monitoring</button>
+                <pre id="monitoringResult"></pre>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>System Administration</h2>
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span>/api/admin/users</span>
+                    <button onclick="testGetAdminUsers()">Test</button>
+                </div>
+                <div class="query-params">
+                    <input type="text" id="adminUserRole" placeholder="Role (sysAdmin/orgAdmin/courseAdmin/instructor/student)" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="text" id="adminUserOrgId" placeholder="Organization ID" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="text" id="adminUserStatus" placeholder="Status (active/inactive)" style="width: 100%; padding: 8px; margin: 10px 0;">
+                </div>
+                <div class="response" id="adminUsersResponse"></div>
+            </div>
+            
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span>/api/admin/users</span>
+                    <button onclick="testCreateAdminUser()">Test</button>
+                </div>
+                <textarea class="request-body" id="createAdminUserBody">{
+    "username": "admin_user",
+    "email": "admin@example.com",
+    "password": "secure_password",
+    "role": "sysAdmin",
+    "organization_id": 1,
+    "is_active": true
+}</textarea>
+                <div class="response" id="createAdminUserResponse"></div>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method put">PUT</span>
+                    <span>/api/admin/users/:id</span>
+                    <button onclick="testUpdateAdminUser()">Test</button>
+                </div>
+                <input type="text" id="updateAdminUserId" placeholder="User ID" style="width: 100%; padding: 8px; margin: 10px 0;">
+                <textarea class="request-body" id="updateAdminUserBody">{
+    "username": "updated_admin",
+    "email": "updated@example.com",
+    "role": "orgAdmin",
+    "is_active": true
+}</textarea>
+                <div class="response" id="updateAdminUserResponse"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>System Monitoring</h2>
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span>/api/monitoring/health</span>
+                    <button onclick="testGetHealth()">Test</button>
+                </div>
+                <div class="response" id="healthResponse"></div>
+            </div>
+            
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span>/api/monitoring/metrics</span>
+                    <button onclick="testGetMetrics()">Test</button>
+                </div>
+                <div class="query-params">
+                    <input type="text" id="metricsType" placeholder="Type (memory/cpu/requests)" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="text" id="metricsTimeRange" placeholder="Time Range (1h/24h/7d)" style="width: 100%; padding: 8px; margin: 10px 0;">
+                </div>
+                <div class="response" id="metricsResponse"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>User Management</h2>
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span>/api/users/profile</span>
+                    <button onclick="testGetUserProfile()">Test</button>
+                </div>
+                <div class="response" id="userProfileResponse"></div>
+            </div>
+            
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method put">PUT</span>
+                    <span>/api/users/profile</span>
+                    <button onclick="testUpdateUserProfile()">Test</button>
+                </div>
+                <textarea class="request-body" id="updateUserProfileBody">{
+    "username": "updated_username",
+    "email": "updated@example.com",
+    "current_password": "current_password",
+    "new_password": "new_password"
+}</textarea>
+                <div class="response" id="updateUserProfileResponse"></div>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span>/api/users/permissions</span>
+                    <button onclick="testGetUserPermissions()">Test</button>
+                </div>
+                <div class="response" id="userPermissionsResponse"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Response History</h2>
+            <div class="history" id="responseHistory"></div>
+        </div>
+
+        <div class="section">
+            <h2>Response Formatting</h2>
+            <div class="format-options">
+                <label>
+                    <input type="checkbox" id="formatJson" checked> Format JSON
+                </label>
+                <label>
+                    <input type="checkbox" id="showHeaders"> Show Headers
+                </label>
+                <label>
+                    <input type="checkbox" id="showTiming"> Show Timing
+                </label>
+                <select id="responseFormat">
+                    <option value="json">JSON</option>
+                    <option value="table">Table</option>
+                    <option value="raw">Raw</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Advanced Filtering</h2>
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span>/api/advanced-search</span>
+                    <button onclick="testAdvancedSearch()">Test</button>
+                </div>
+                <div class="query-params">
+                    <input type="text" id="searchQuery" placeholder="Search Query" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="text" id="searchFields" placeholder="Fields (comma-separated)" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="text" id="searchSort" placeholder="Sort Field" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="text" id="searchOrder" placeholder="Order (asc/desc)" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="number" id="searchLimit" placeholder="Limit" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="number" id="searchOffset" placeholder="Offset" style="width: 100%; padding: 8px; margin: 10px 0;">
+                </div>
+                <div class="response" id="advancedSearchResponse"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Request Validation</h2>
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span>/api/validate</span>
+                    <button onclick="testValidation()">Test</button>
+                </div>
+                <textarea class="request-body" id="validationBody">{
+    "data": {
+        "name": "Test Name",
+        "email": "test@example.com",
+        "age": 25
+    },
+    "rules": {
+        "name": ["required", "string", "min:3"],
+        "email": ["required", "email"],
+        "age": ["required", "number", "min:18"]
+    }
+}</textarea>
+                <div class="response" id="validationResponse"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Response Formatting</h2>
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span>/api/format-options</span>
+                    <button onclick="testFormatOptions()">Test</button>
+                </div>
+                <div class="query-params">
+                    <select id="formatType" style="width: 100%; padding: 8px; margin: 10px 0;">
+                        <option value="json">JSON</option>
+                        <option value="xml">XML</option>
+                        <option value="csv">CSV</option>
+                        <option value="table">Table</option>
+                    </select>
+                    <select id="formatStyle" style="width: 100%; padding: 8px; margin: 10px 0;">
+                        <option value="pretty">Pretty</option>
+                        <option value="compact">Compact</option>
+                        <option value="minimal">Minimal</option>
+                    </select>
+                    <input type="checkbox" id="includeMetadata" checked> Include Metadata
+                    <input type="checkbox" id="includeTiming" checked> Include Timing
+                </div>
+                <div class="response" id="formatOptionsResponse"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>System Logs</h2>
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span>/api/logs</span>
+                    <button onclick="testGetLogs()">Test</button>
+                </div>
+                <div class="query-params">
+                    <input type="text" id="logLevel" placeholder="Level (error/warn/info/debug)" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="text" id="logSource" placeholder="Source" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="text" id="logStartDate" placeholder="Start Date (YYYY-MM-DD)" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="text" id="logEndDate" placeholder="End Date (YYYY-MM-DD)" style="width: 100%; padding: 8px; margin: 10px 0;">
+                </div>
+                <div class="response" id="logsResponse"></div>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span>/api/audit-trail</span>
+                    <button onclick="testGetAuditTrail()">Test</button>
+                </div>
+                <div class="query-params">
+                    <input type="text" id="auditAction" placeholder="Action" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="text" id="auditUser" placeholder="User ID" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="text" id="auditEntity" placeholder="Entity Type" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="text" id="auditEntityId" placeholder="Entity ID" style="width: 100%; padding: 8px; margin: 10px 0;">
+                </div>
+                <div class="response" id="auditTrailResponse"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Configuration Management</h2>
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span>/api/config</span>
+                    <button onclick="testGetConfig()">Test</button>
+                </div>
+                <div class="query-params">
+                    <input type="text" id="configKey" placeholder="Config Key" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="text" id="configScope" placeholder="Scope (global/organization/user)" style="width: 100%; padding: 8px; margin: 10px 0;">
+                </div>
+                <div class="response" id="configResponse"></div>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method put">PUT</span>
+                    <span>/api/config</span>
+                    <button onclick="testUpdateConfig()">Test</button>
+                </div>
+                <textarea class="request-body" id="updateConfigBody">{
+    "key": "feature_flags",
+    "value": {
+        "new_feature": true,
+        "experimental_mode": false
+    },
+    "scope": "global",
+    "description": "Feature flags configuration"
+}</textarea>
+                <div class="response" id="updateConfigResponse"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>System Health & Performance</h2>
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span>/api/health/detailed</span>
+                    <button onclick="testGetDetailedHealth()">Test</button>
+                </div>
+                <div class="query-params">
+                    <input type="checkbox" id="includeDbHealth" checked> Include Database Health
+                    <input type="checkbox" id="includeCacheHealth" checked> Include Cache Health
+                    <input type="checkbox" id="includeExternalServices" checked> Include External Services
+                </div>
+                <div class="response" id="detailedHealthResponse"></div>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span>/api/performance/metrics</span>
+                    <button onclick="testGetPerformanceMetrics()">Test</button>
+                </div>
+                <div class="query-params">
+                    <input type="text" id="metricsInterval" placeholder="Interval (1m/5m/15m/1h)" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="text" id="metricsType" placeholder="Type (cpu/memory/requests/db)" style="width: 100%; padding: 8px; margin: 10px 0;">
+                </div>
+                <div class="response" id="performanceMetricsResponse"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Database Operations</h2>
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span>/api/db/backup</span>
+                    <button onclick="testCreateBackup()">Test</button>
+                </div>
+                <div class="query-params">
+                    <input type="text" id="backupType" placeholder="Type (full/incremental)" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="text" id="backupCompression" placeholder="Compression (none/gzip)" style="width: 100%; padding: 8px; margin: 10px 0;">
+                </div>
+                <div class="response" id="backupResponse"></div>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span>/api/db/restore</span>
+                    <button onclick="testRestoreBackup()">Test</button>
+                </div>
+                <textarea class="request-body" id="restoreBackupBody">{
+    "backup_id": "backup_123",
+    "options": {
+        "verify_integrity": true,
+        "skip_migrations": false
+    }
+}</textarea>
+                <div class="response" id="restoreResponse"></div>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span>/api/db/migrations</span>
+                    <button onclick="testGetMigrations()">Test</button>
+                </div>
+                <div class="query-params">
+                    <input type="text" id="migrationStatus" placeholder="Status (pending/completed/failed)" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="text" id="migrationBatch" placeholder="Batch Number" style="width: 100%; padding: 8px; margin: 10px 0;">
+                </div>
+                <div class="response" id="migrationsResponse"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>System Maintenance</h2>
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span>/api/maintenance/cleanup</span>
+                    <button onclick="testCleanup()">Test</button>
+                </div>
+                <textarea class="request-body" id="cleanupBody">{
+    "tasks": [
+        "clear_old_logs",
+        "optimize_tables",
+        "clear_temp_files"
+    ],
+    "options": {
+        "older_than_days": 30,
+        "dry_run": false
+    }
+}</textarea>
+                <div class="response" id="cleanupResponse"></div>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span>/api/maintenance/status</span>
+                    <button onclick="testGetMaintenanceStatus()">Test</button>
+                </div>
+                <div class="response" id="maintenanceStatusResponse"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Error Handling & Debugging</h2>
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span>/api/debug/errors</span>
+                    <button onclick="testGetErrors()">Test</button>
+                </div>
+                <div class="query-params">
+                    <input type="text" id="errorLevel" placeholder="Level (error/warn/info)" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="text" id="errorSource" placeholder="Source" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="text" id="errorTimeRange" placeholder="Time Range (1h/24h/7d)" style="width: 100%; padding: 8px; margin: 10px 0;">
+                </div>
+                <div class="response" id="errorsResponse"></div>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span>/api/debug/simulate-error</span>
+                    <button onclick="testSimulateError()">Test</button>
+                </div>
+                <textarea class="request-body" id="simulateErrorBody">{
+    "type": "validation",
+    "message": "Test error message",
+    "details": {
+        "field": "test_field",
+        "value": "invalid_value"
+    }
+}</textarea>
+                <div class="response" id="simulateErrorResponse"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Request Validation</h2>
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span>/api/validate/request</span>
+                    <button onclick="testValidateRequest()">Test</button>
+                </div>
+                <textarea class="request-body" id="validateRequestBody">{
+    "endpoint": "/api/students",
+    "method": "POST",
+    "body": {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "organization_id": 1
+    },
+    "rules": {
+        "name": ["required", "string", "min:3"],
+        "email": ["required", "email"],
+        "organization_id": ["required", "integer", "exists:organizations,id"]
+    }
+}</textarea>
+                <div class="response" id="validateRequestResponse"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Response Formatting</h2>
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span>/api/format/response</span>
+                    <button onclick="testFormatResponse()">Test</button>
+                </div>
+                <textarea class="request-body" id="formatResponseBody">{
+    "data": {
+        "id": 1,
+        "name": "John Doe",
+        "email": "john@example.com",
+        "created_at": "2025-04-03T19:54:18.033Z"
+    },
+    "format": {
+        "type": "table",
+        "options": {
+            "include_timestamp": true,
+            "include_headers": true,
+            "sort_by": "name"
+        }
+    }
+}</textarea>
+                <div class="response" id="formatResponse"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>System Configuration</h2>
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span>/api/config/system</span>
+                    <button onclick="testGetSystemConfig()">Test</button>
+                </div>
+                <div class="query-params">
+                    <input type="text" id="configScope" placeholder="Scope (global/organization/user)" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="text" id="configKey" placeholder="Key" style="width: 100%; padding: 8px; margin: 10px 0;">
+                </div>
+                <div class="response" id="systemConfigResponse"></div>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method put">PUT</span>
+                    <span>/api/config/system</span>
+                    <button onclick="testUpdateSystemConfig()">Test</button>
+                </div>
+                <textarea class="request-body" id="updateSystemConfigBody">{
+    "scope": "global",
+    "key": "max_students_per_course",
+    "value": 30,
+    "description": "Maximum number of students allowed per course"
+}</textarea>
+                <div class="response" id="updateSystemConfigResponse"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>API Documentation</h2>
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span>/api/docs</span>
+                    <button onclick="testGetApiDocs()">Test</button>
+                </div>
+                <div class="query-params">
+                    <input type="text" id="docsVersion" placeholder="Version (v1/v2)" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    <input type="text" id="docsFormat" placeholder="Format (json/yaml)" style="width: 100%; padding: 8px; margin: 10px 0;">
+                </div>
+                <div class="response" id="apiDocsResponse"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:9005';
+        let authToken = localStorage.getItem('authToken') || '';
+        const responseHistory = [];
+
+        function addToHistory(method, endpoint, response) {
+            const timestamp = new Date().toLocaleTimeString();
+            const historyItem = {
+                timestamp,
+                method,
+                endpoint,
+                response
+            };
+            responseHistory.unshift(historyItem);
+            updateHistoryDisplay();
+        }
+
+        function updateHistoryDisplay() {
+            const historyDiv = document.getElementById('responseHistory');
+            historyDiv.innerHTML = responseHistory
+                .map(item => `
+                    <div class="history-item" onclick="showHistoryItem(${responseHistory.indexOf(item)})">
+                        [${item.timestamp}] ${item.method} ${item.endpoint}
+                    </div>
+                `)
+                .join('');
+        }
+
+        function showHistoryItem(index) {
+            const item = responseHistory[index];
+            alert(JSON.stringify(item.response, null, 2));
+        }
+
+        async function makeRequest(method, url, body = null) {
+            const startTime = performance.now();
+            const token = localStorage.getItem('token');
+            const headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            };
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:9005${url}`, {
+                    method,
+                    headers,
+                    body: body ? JSON.stringify(body) : null,
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                return {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries()),
+                    data
+                };
+            } catch (error) {
+                console.error('Request failed:', error);
+                return {
+                    error: true,
+                    message: error.message,
+                    status: error.status || 500
+                };
+            }
+        }
+
+        async function testLogin() {
+            const body = JSON.parse(document.getElementById('loginBody').value);
+            const response = await makeRequest('POST', '/api/auth/login', body);
+            
+            if (response.token) {
+                authToken = response.token;
+                localStorage.setItem('authToken', authToken);
+                document.getElementById('loginResponse').innerHTML = `<pre class="success">${JSON.stringify(response, null, 2)}</pre>`;
+            } else {
+                document.getElementById('loginResponse').innerHTML = `<pre class="error">${JSON.stringify(response, null, 2)}</pre>`;
+            }
+        }
+
+        async function testGetUsers() {
+            const result = await makeRequest('GET', '/api/users');
+            document.getElementById('usersResult').textContent = JSON.stringify(result, null, 2);
+        }
+
+        async function testGetOrganizations() {
+            const result = await makeRequest('GET', '/api/organizations');
+            document.getElementById('organizationsResult').textContent = JSON.stringify(result, null, 2);
+        }
+
+        async function testGetCourses() {
+            const result = await makeRequest('GET', '/api/courses');
+            document.getElementById('coursesResult').textContent = JSON.stringify(result, null, 2);
+        }
+
+        async function testGetCourseTypes() {
+            const orgId = document.getElementById('courseTypeOrgId').value;
+            const status = document.getElementById('courseTypeStatus').value;
+            const startTime = performance.now();
+            
+            let url = '/api/course-types';
+            const params = new URLSearchParams();
+            if (orgId) params.append('organization_id', orgId);
+            if (status) params.append('status', status);
+            if (params.toString()) url += `?${params.toString()}`;
+
+            const response = await makeRequest('GET', url);
+            const endTime = performance.now();
+            
+            document.getElementById('courseTypesResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testGetCourseInstances() {
+            const response = await makeRequest('GET', '/api/course-instances');
+            document.getElementById('courseInstancesResponse').innerHTML = `<pre>${JSON.stringify(response, null, 2)}</pre>`;
+        }
+
+        async function testGetInstructors() {
+            const result = await makeRequest('GET', '/api/instructors');
+            document.getElementById('instructorsResult').textContent = JSON.stringify(result, null, 2);
+        }
+
+        async function testGetInstructorCourses() {
+            const result = await makeRequest('GET', '/api/instructor/courses');
+            document.getElementById('instructorCoursesResult').textContent = JSON.stringify(result, null, 2);
+        }
+
+        async function testGetStudents() {
+            const orgId = document.getElementById('studentOrgId').value;
+            const status = document.getElementById('studentStatus').value;
+            const startTime = performance.now();
+            
+            let url = '/api/students';
+            const params = new URLSearchParams();
+            if (orgId) params.append('organization_id', orgId);
+            if (status) params.append('status', status);
+            if (params.toString()) url += `?${params.toString()}`;
+
+            const response = await makeRequest('GET', url);
+            const endTime = performance.now();
+            
+            document.getElementById('studentsResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testGetStudentRegistrations() {
+            const studentId = document.getElementById('regStudentId').value;
+            const courseInstanceId = document.getElementById('regCourseInstanceId').value;
+            const status = document.getElementById('regStatus').value;
+            const startTime = performance.now();
+            
+            let url = '/api/student/registrations';
+            const params = new URLSearchParams();
+            if (studentId) params.append('student_id', studentId);
+            if (courseInstanceId) params.append('course_instance_id', courseInstanceId);
+            if (status) params.append('status', status);
+            if (params.toString()) url += `?${params.toString()}`;
+
+            const response = await makeRequest('GET', url);
+            const endTime = performance.now();
+            
+            document.getElementById('studentRegistrationsResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testCreateStudentRegistration() {
+            const body = JSON.parse(document.getElementById('createRegistrationBody').value);
+            const startTime = performance.now();
+            
+            const response = await makeRequest('POST', '/api/student/registrations', body);
+            const endTime = performance.now();
+            
+            document.getElementById('createRegistrationResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testGetCourseAttendance() {
+            const courseId = document.getElementById('attendanceCourseId').value;
+            if (!courseId) {
+                alert('Please enter a Course ID');
+                return;
+            }
+
+            const startTime = performance.now();
+            const response = await makeRequest('GET', `/api/attendance/course/${courseId}`);
+            const endTime = performance.now();
+            
+            document.getElementById('courseAttendanceResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testCreateAttendance() {
+            const body = JSON.parse(document.getElementById('createAttendanceBody').value);
+            const startTime = performance.now();
+            
+            const response = await makeRequest('POST', '/api/attendance', body);
+            const endTime = performance.now();
+            
+            document.getElementById('createAttendanceResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testUpdateAttendance() {
+            const id = document.getElementById('updateAttendanceId').value;
+            if (!id) {
+                alert('Please enter an Attendance ID');
+                return;
+            }
+
+            const body = JSON.parse(document.getElementById('updateAttendanceBody').value);
+            const startTime = performance.now();
+            
+            const response = await makeRequest('PUT', `/api/attendance/${id}`, body);
+            const endTime = performance.now();
+            
+            document.getElementById('updateAttendanceResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testGetDashboard() {
+            const result = await makeRequest('GET', '/api/dashboard');
+            document.getElementById('dashboardResult').textContent = JSON.stringify(result, null, 2);
+        }
+
+        async function testGetAccounting() {
+            const result = await makeRequest('GET', '/api/accounting');
+            document.getElementById('accountingResult').textContent = JSON.stringify(result, null, 2);
+        }
+
+        async function testGetMonitoring() {
+            const result = await makeRequest('GET', '/api/monitoring');
+            document.getElementById('monitoringResult').textContent = JSON.stringify(result, null, 2);
+        }
+
+        async function testGetInstructorAvailability() {
+            const response = await makeRequest('GET', '/api/instructor/availability');
+            document.getElementById('instructorAvailabilityResponse').innerHTML = `<pre>${JSON.stringify(response, null, 2)}</pre>`;
+        }
+
+        async function testCreateInstructorAvailability() {
+            const body = JSON.parse(document.getElementById('createAvailabilityBody').value);
+            const response = await makeRequest('POST', '/api/instructor/availability', body);
+            document.getElementById('createAvailabilityResponse').innerHTML = `<pre>${JSON.stringify(response, null, 2)}</pre>`;
+        }
+
+        async function testCreateStudent() {
+            const body = JSON.parse(document.getElementById('createStudentBody').value);
+            const startTime = performance.now();
+            
+            const response = await makeRequest('POST', '/api/students', body);
+            const endTime = performance.now();
+            
+            document.getElementById('createStudentResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testUpdateStudent() {
+            const id = document.getElementById('updateStudentId').value;
+            if (!id) {
+                alert('Please enter a Student ID');
+                return;
+            }
+
+            const body = JSON.parse(document.getElementById('updateStudentBody').value);
+            const startTime = performance.now();
+            
+            const response = await makeRequest('PUT', `/api/students/${id}`, body);
+            const endTime = performance.now();
+            
+            document.getElementById('updateStudentResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testCreateCourseType() {
+            const body = JSON.parse(document.getElementById('createCourseTypeBody').value);
+            const startTime = performance.now();
+            
+            const response = await makeRequest('POST', '/api/course-types', body);
+            const endTime = performance.now();
+            
+            document.getElementById('createCourseTypeResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testGetAdminUsers() {
+            const role = document.getElementById('adminUserRole').value;
+            const orgId = document.getElementById('adminUserOrgId').value;
+            const status = document.getElementById('adminUserStatus').value;
+            const startTime = performance.now();
+            
+            let url = '/api/admin/users';
+            const params = new URLSearchParams();
+            if (role) params.append('role', role);
+            if (orgId) params.append('organization_id', orgId);
+            if (status) params.append('status', status);
+            if (params.toString()) url += `?${params.toString()}`;
+
+            const response = await makeRequest('GET', url);
+            const endTime = performance.now();
+            
+            document.getElementById('adminUsersResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testCreateAdminUser() {
+            const body = JSON.parse(document.getElementById('createAdminUserBody').value);
+            const startTime = performance.now();
+            
+            const response = await makeRequest('POST', '/api/admin/users', body);
+            const endTime = performance.now();
+            
+            document.getElementById('createAdminUserResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testUpdateAdminUser() {
+            const id = document.getElementById('updateAdminUserId').value;
+            if (!id) {
+                alert('Please enter a User ID');
+                return;
+            }
+
+            const body = JSON.parse(document.getElementById('updateAdminUserBody').value);
+            const startTime = performance.now();
+            
+            const response = await makeRequest('PUT', `/api/admin/users/${id}`, body);
+            const endTime = performance.now();
+            
+            document.getElementById('updateAdminUserResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testGetHealth() {
+            const startTime = performance.now();
+            const response = await makeRequest('GET', '/api/monitoring/health');
+            const endTime = performance.now();
+            
+            document.getElementById('healthResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testGetMetrics() {
+            const type = document.getElementById('metricsType').value;
+            const timeRange = document.getElementById('metricsTimeRange').value;
+            const startTime = performance.now();
+            
+            let url = '/api/monitoring/metrics';
+            const params = new URLSearchParams();
+            if (type) params.append('type', type);
+            if (timeRange) params.append('time_range', timeRange);
+            if (params.toString()) url += `?${params.toString()}`;
+
+            const response = await makeRequest('GET', url);
+            const endTime = performance.now();
+            
+            document.getElementById('metricsResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testGetUserProfile() {
+            const startTime = performance.now();
+            const response = await makeRequest('GET', '/api/users/profile');
+            const endTime = performance.now();
+            
+            document.getElementById('userProfileResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testUpdateUserProfile() {
+            const body = JSON.parse(document.getElementById('updateUserProfileBody').value);
+            const startTime = performance.now();
+            
+            const response = await makeRequest('PUT', '/api/users/profile', body);
+            const endTime = performance.now();
+            
+            document.getElementById('updateUserProfileResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testGetUserPermissions() {
+            const startTime = performance.now();
+            const response = await makeRequest('GET', '/api/users/permissions');
+            const endTime = performance.now();
+            
+            document.getElementById('userPermissionsResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testAdvancedSearch() {
+            const query = document.getElementById('searchQuery').value;
+            const fields = document.getElementById('searchFields').value;
+            const sort = document.getElementById('searchSort').value;
+            const order = document.getElementById('searchOrder').value;
+            const limit = document.getElementById('searchLimit').value;
+            const offset = document.getElementById('searchOffset').value;
+            const startTime = performance.now();
+            
+            let url = '/api/advanced-search';
+            const params = new URLSearchParams();
+            if (query) params.append('q', query);
+            if (fields) params.append('fields', fields);
+            if (sort) params.append('sort', sort);
+            if (order) params.append('order', order);
+            if (limit) params.append('limit', limit);
+            if (offset) params.append('offset', offset);
+            if (params.toString()) url += `?${params.toString()}`;
+
+            const response = await makeRequest('GET', url);
+            const endTime = performance.now();
+            
+            document.getElementById('advancedSearchResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testValidation() {
+            const body = JSON.parse(document.getElementById('validationBody').value);
+            const startTime = performance.now();
+            
+            const response = await makeRequest('POST', '/api/validate', body);
+            const endTime = performance.now();
+            
+            document.getElementById('validationResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testFormatOptions() {
+            const type = document.getElementById('formatType').value;
+            const style = document.getElementById('formatStyle').value;
+            const includeMetadata = document.getElementById('includeMetadata').checked;
+            const includeTiming = document.getElementById('includeTiming').checked;
+            const startTime = performance.now();
+            
+            let url = '/api/format-options';
+            const params = new URLSearchParams();
+            params.append('type', type);
+            params.append('style', style);
+            params.append('metadata', includeMetadata);
+            params.append('timing', includeTiming);
+            url += `?${params.toString()}`;
+
+            const response = await makeRequest('GET', url);
+            const endTime = performance.now();
+            
+            document.getElementById('formatOptionsResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testGetLogs() {
+            const level = document.getElementById('logLevel').value;
+            const source = document.getElementById('logSource').value;
+            const startDate = document.getElementById('logStartDate').value;
+            const endDate = document.getElementById('logEndDate').value;
+            const startTime = performance.now();
+            
+            let url = '/api/logs';
+            const params = new URLSearchParams();
+            if (level) params.append('level', level);
+            if (source) params.append('source', source);
+            if (startDate) params.append('start_date', startDate);
+            if (endDate) params.append('end_date', endDate);
+            if (params.toString()) url += `?${params.toString()}`;
+
+            const response = await makeRequest('GET', url);
+            const endTime = performance.now();
+            
+            document.getElementById('logsResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testGetAuditTrail() {
+            const action = document.getElementById('auditAction').value;
+            const user = document.getElementById('auditUser').value;
+            const entity = document.getElementById('auditEntity').value;
+            const entityId = document.getElementById('auditEntityId').value;
+            const startTime = performance.now();
+            
+            let url = '/api/audit-trail';
+            const params = new URLSearchParams();
+            if (action) params.append('action', action);
+            if (user) params.append('user', user);
+            if (entity) params.append('entity', entity);
+            if (entityId) params.append('entity_id', entityId);
+            if (params.toString()) url += `?${params.toString()}`;
+
+            const response = await makeRequest('GET', url);
+            const endTime = performance.now();
+            
+            document.getElementById('auditTrailResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testGetConfig() {
+            const key = document.getElementById('configKey').value;
+            const scope = document.getElementById('configScope').value;
+            const startTime = performance.now();
+            
+            let url = '/api/config';
+            const params = new URLSearchParams();
+            if (key) params.append('key', key);
+            if (scope) params.append('scope', scope);
+            if (params.toString()) url += `?${params.toString()}`;
+
+            const response = await makeRequest('GET', url);
+            const endTime = performance.now();
+            
+            document.getElementById('configResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testUpdateConfig() {
+            const body = JSON.parse(document.getElementById('updateConfigBody').value);
+            const startTime = performance.now();
+            
+            const response = await makeRequest('PUT', '/api/config', body);
+            const endTime = performance.now();
+            
+            document.getElementById('updateConfigResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testGetDetailedHealth() {
+            const includeDbHealth = document.getElementById('includeDbHealth').checked;
+            const includeCacheHealth = document.getElementById('includeCacheHealth').checked;
+            const includeExternalServices = document.getElementById('includeExternalServices').checked;
+            const startTime = performance.now();
+            
+            let url = '/api/health/detailed';
+            const params = new URLSearchParams();
+            params.append('db', includeDbHealth);
+            params.append('cache', includeCacheHealth);
+            params.append('external', includeExternalServices);
+            url += `?${params.toString()}`;
+
+            const response = await makeRequest('GET', url);
+            const endTime = performance.now();
+            
+            document.getElementById('detailedHealthResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testGetPerformanceMetrics() {
+            const interval = document.getElementById('metricsInterval').value;
+            const type = document.getElementById('metricsType').value;
+            const startTime = performance.now();
+            
+            let url = '/api/performance/metrics';
+            const params = new URLSearchParams();
+            if (interval) params.append('interval', interval);
+            if (type) params.append('type', type);
+            if (params.toString()) url += `?${params.toString()}`;
+
+            const response = await makeRequest('GET', url);
+            const endTime = performance.now();
+            
+            document.getElementById('performanceMetricsResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testCreateBackup() {
+            const type = document.getElementById('backupType').value;
+            const compression = document.getElementById('backupCompression').value;
+            const startTime = performance.now();
+            
+            let url = '/api/db/backup';
+            const params = new URLSearchParams();
+            if (type) params.append('type', type);
+            if (compression) params.append('compression', compression);
+            if (params.toString()) url += `?${params.toString()}`;
+
+            const response = await makeRequest('GET', url);
+            const endTime = performance.now();
+            
+            document.getElementById('backupResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testRestoreBackup() {
+            const body = JSON.parse(document.getElementById('restoreBackupBody').value);
+            const startTime = performance.now();
+            
+            const response = await makeRequest('POST', '/api/db/restore', body);
+            const endTime = performance.now();
+            
+            document.getElementById('restoreResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testGetMigrations() {
+            const status = document.getElementById('migrationStatus').value;
+            const batch = document.getElementById('migrationBatch').value;
+            const startTime = performance.now();
+            
+            let url = '/api/db/migrations';
+            const params = new URLSearchParams();
+            if (status) params.append('status', status);
+            if (batch) params.append('batch', batch);
+            if (params.toString()) url += `?${params.toString()}`;
+
+            const response = await makeRequest('GET', url);
+            const endTime = performance.now();
+            
+            document.getElementById('migrationsResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testCleanup() {
+            const body = JSON.parse(document.getElementById('cleanupBody').value);
+            const startTime = performance.now();
+            
+            const response = await makeRequest('POST', '/api/maintenance/cleanup', body);
+            const endTime = performance.now();
+            
+            document.getElementById('cleanupResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testGetMaintenanceStatus() {
+            const startTime = performance.now();
+            const response = await makeRequest('GET', '/api/maintenance/status');
+            const endTime = performance.now();
+            
+            document.getElementById('maintenanceStatusResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testGetErrors() {
+            const level = document.getElementById('errorLevel').value;
+            const source = document.getElementById('errorSource').value;
+            const timeRange = document.getElementById('errorTimeRange').value;
+            const startTime = performance.now();
+            
+            let url = '/api/debug/errors';
+            const params = new URLSearchParams();
+            if (level) params.append('level', level);
+            if (source) params.append('source', source);
+            if (timeRange) params.append('time_range', timeRange);
+            if (params.toString()) url += `?${params.toString()}`;
+
+            const response = await makeRequest('GET', url);
+            const endTime = performance.now();
+            
+            document.getElementById('errorsResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testSimulateError() {
+            const body = JSON.parse(document.getElementById('simulateErrorBody').value);
+            const startTime = performance.now();
+            
+            const response = await makeRequest('POST', '/api/debug/simulate-error', body);
+            const endTime = performance.now();
+            
+            document.getElementById('simulateErrorResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testValidateRequest() {
+            const body = JSON.parse(document.getElementById('validateRequestBody').value);
+            const startTime = performance.now();
+            
+            const response = await makeRequest('POST', '/api/validate/request', body);
+            const endTime = performance.now();
+            
+            document.getElementById('validateRequestResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testFormatResponse() {
+            const body = JSON.parse(document.getElementById('formatResponseBody').value);
+            const startTime = performance.now();
+            
+            const response = await makeRequest('POST', '/api/format/response', body);
+            const endTime = performance.now();
+            
+            document.getElementById('formatResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testGetSystemConfig() {
+            const scope = document.getElementById('configScope').value;
+            const key = document.getElementById('configKey').value;
+            const startTime = performance.now();
+            
+            let url = '/api/config/system';
+            const params = new URLSearchParams();
+            if (scope) params.append('scope', scope);
+            if (key) params.append('key', key);
+            if (params.toString()) url += `?${params.toString()}`;
+
+            const response = await makeRequest('GET', url);
+            const endTime = performance.now();
+            
+            document.getElementById('systemConfigResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testUpdateSystemConfig() {
+            const body = JSON.parse(document.getElementById('updateSystemConfigBody').value);
+            const startTime = performance.now();
+            
+            const response = await makeRequest('PUT', '/api/config/system', body);
+            const endTime = performance.now();
+            
+            document.getElementById('updateSystemConfigResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+
+        async function testGetApiDocs() {
+            const version = document.getElementById('docsVersion').value;
+            const format = document.getElementById('docsFormat').value;
+            const startTime = performance.now();
+            
+            let url = '/api/docs';
+            const params = new URLSearchParams();
+            if (version) params.append('version', version);
+            if (format) params.append('format', format);
+            if (params.toString()) url += `?${params.toString()}`;
+
+            const response = await makeRequest('GET', url);
+            const endTime = performance.now();
+            
+            document.getElementById('apiDocsResponse').innerHTML = 
+                `<pre>${formatResponse(response, {}, endTime - startTime)}</pre>`;
+        }
+    </script>
+</body>
+</html> 

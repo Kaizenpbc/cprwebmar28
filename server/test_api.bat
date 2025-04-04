@@ -1,0 +1,24 @@
+@echo off
+echo Testing API endpoints...
+
+echo.
+echo Testing GET /api/instructor/courses
+curl.exe -X GET http://localhost:9005/api/instructor/courses -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjgsInJvbGUiOiJpbnN0cnVjdG9yIiwiZW1haWwiOiJpbnN0cnVjdG9yMUBleGFtcGxlLmNvbSIsIm9yZ2FuaXphdGlvbklkIjoyLCJpYXQiOjE3NDM2OTk0MzksImV4cCI6MTc0Mzc4NTgzOX0.wqjvJAjG84h_3oviKxhJb1o_1_J5gs_7-Yi-6_g_S4k"
+
+echo.
+echo Testing GET /api/students
+curl.exe -X GET http://localhost:9005/api/students -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjgsInJvbGUiOiJpbnN0cnVjdG9yIiwiZW1haWwiOiJpbnN0cnVjdG9yMUBleGFtcGxlLmNvbSIsIm9yZ2FuaXphdGlvbklkIjoyLCJpYXQiOjE3NDM2OTk0MzksImV4cCI6MTc0Mzc4NTgzOX0.wqjvJAjG84h_3oviKxhJb1o_1_J5gs_7-Yi-6_g_S4k"
+
+echo.
+echo Testing GET /api/course-types
+curl.exe -X GET http://localhost:9005/api/course-types -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjgsInJvbGUiOiJpbnN0cnVjdG9yIiwiZW1haWwiOiJpbnN0cnVjdG9yMUBleGFtcGxlLmNvbSIsIm9yZ2FuaXphdGlvbklkIjoyLCJpYXQiOjE3NDM2OTk0MzksImV4cCI6MTc0Mzc4NTgzOX0.wqjvJAjG84h_3oviKxhJb1o_1_J5gs_7-Yi-6_g_S4k"
+
+echo.
+echo Testing GET /api/course-instances
+curl.exe -X GET http://localhost:9005/api/course-instances -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjgsInJvbGUiOiJpbnN0cnVjdG9yIiwiZW1haWwiOiJpbnN0cnVjdG9yMUBleGFtcGxlLmNvbSIsIm9yZ2FuaXphdGlvbklkIjoyLCJpYXQiOjE3NDM2OTk0MzksImV4cCI6MTc0Mzc4NTgzOX0.wqjvJAjG84h_3oviKxhJb1o_1_J5gs_7-Yi-6_g_S4k"
+
+echo.
+echo Testing GET /api/attendance
+curl.exe -X GET http://localhost:9005/api/attendance -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjgsInJvbGUiOiJpbnN0cnVjdG9yIiwiZW1haWwiOiJpbnN0cnVjdG9yMUBleGFtcGxlLmNvbSIsIm9yZ2FuaXphdGlvbklkIjoyLCJpYXQiOjE3NDM2OTk0MzksImV4cCI6MTc0Mzc4NTgzOX0.wqjvJAjG84h_3oviKxhJb1o_1_J5gs_7-Yi-6_g_S4k"
+
+pause 

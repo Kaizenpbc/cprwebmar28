@@ -1,7 +1,8 @@
 import express, { Response, Request } from 'express';
-import { authMiddleware, roleMiddleware } from '../middleware/auth';
+import { authMiddleware } from '../middleware/auth';
+import { roleMiddleware } from '../middleware/role';
 import { db } from '../config/db';
-import { UserRole } from '../types';
+import { UserRole } from '../types/user';
 import logger from '../utils/logger';
 
 const router = express.Router();
@@ -11,96 +12,83 @@ router.use(authMiddleware);
 
 // Get instructor's courses
 router.get('/courses', roleMiddleware([UserRole.INSTRUCTOR]), async (req: Request, res: Response): Promise<void> => {
+    const requestId = req.headers['x-request-id'] || Math.random().toString(36).substring(7);
+    
     try {
-        logger.debug('Instructor courses route - Processing request for user:', req.user?.userId);
-        logger.debug('Instructor courses route - User role:', req.user?.role);
-        logger.debug('Instructor courses route - Full user object:', req.user);
-        
-        if (!req.user?.userId) {
-            logger.warn('Instructor courses route - No user ID found in request');
-            res.status(401).json({ success: false, message: 'User not authenticated' });
-            return;
-        }
-
-        // First check database connection and current database
-        const dbInfo = await db.raw('SELECT current_database(), current_user');
-        logger.debug('Database info:', dbInfo.rows[0]);
-
-        // Check if instructor exists
-        const instructor = await db('users')
-            .where({ id: req.user.userId, role: UserRole.INSTRUCTOR })
-            .first();
-        logger.debug('Instructor info:', instructor);
-
-        if (!instructor) {
-            logger.warn('Instructor not found or not an instructor');
-            res.status(403).json({ success: false, message: 'Not authorized as instructor' });
-            return;
-        }
-
-        logger.debug('Instructor courses route - Executing query with instructor_id:', req.user.userId);
-        
-        // Store userId in a variable to avoid TypeScript errors in callbacks
-        const userId = req.user.userId;
-        
-        // First, get just the course instances
-        const courseData = await db('course_instances as ci')
-            .select(
-                'ci.id',
-                'ci.requested_date as date',
-                db.raw('COALESCE(o.name, \'Unknown Organization\')::text as organization'),
-                db.raw('COALESCE(ci.location, \'Location TBD\')::text as location'),
-                db.raw('COALESCE(ct.name, \'Unknown Course Type\')::text as course_type'),
-                db.raw('COALESCE(COUNT(DISTINCT sr.student_id), 0)::integer as students_registered'),
-                db.raw('COALESCE(COUNT(DISTINCT CASE WHEN sa.attended = true THEN sa.student_id END), 0)::integer as students_attendance'),
-                'ci.status'
-            )
-            .leftJoin('organizations as o', 'ci.organization_id', 'o.id')
-            .leftJoin('course_types as ct', 'ci.course_type_id', 'ct.id')
-            .leftJoin('student_registrations as sr', 'ci.id', 'sr.course_instance_id')
-            .leftJoin('student_attendance as sa', 'ci.id', 'sa.course_instance_id')
-            .where('ci.instructor_id', userId)
-            .groupBy('ci.id', 'ci.requested_date', 'o.name', 'ci.location', 'ct.name', 'ci.status');
-
-        logger.debug('Course data:', courseData);
-
-        // Then get available dates
-        const availableDates = await db('instructor_availability')
-            .select(
-                db.raw('NULL::integer as id'),
-                'date',
-                db.raw('NULL::text as organization'),
-                db.raw('NULL::text as location'),
-                db.raw('NULL::text as course_type'),
-                db.raw('0::integer as students_registered'),
-                db.raw('0::integer as students_attendance'),
-                db.raw("'available'::text as status")
-            )
-            .where('instructor_id', userId)
-            .whereRaw('date >= CURRENT_DATE')
-            .whereNotIn('date', function() {
-                this.select('requested_date')
-                    .from('course_instances')
-                    .where('instructor_id', userId);
-            });
-
-        logger.debug('Available dates:', availableDates);
-
-        // Combine and sort results
-        const result = [...availableDates, ...courseData].sort((a, b) => {
-            return new Date(b.date).getTime() - new Date(a.date).getTime();
+        logger.debug('Fetching instructor courses:', {
+            requestId,
+            userId: req.user?.userId,
+            timestamp: new Date().toISOString()
         });
 
-        logger.debug('Final result count:', result.length);
-        res.json({ success: true, data: result });
+        // Get instructor's courses from the database
+        const courses = await db('course_instances')
+            .select(
+                'course_instances.id',
+                'course_instances.course_number',
+                'course_instances.requested_date',
+                'organizations.name as organization_name',
+                'course_instances.location',
+                'course_types.name as course_type',
+                'course_instances.max_students',
+                'course_instances.status',
+                db.raw('COUNT(student_registrations.id) as registered_students'),
+                db.raw('COUNT(CASE WHEN student_attendance.attended = true THEN 1 END) as attended_students')
+            )
+            .leftJoin('organizations', 'course_instances.organization_id', 'organizations.id')
+            .leftJoin('course_types', 'course_instances.course_type_id', 'course_types.id')
+            .leftJoin('student_registrations', 'course_instances.id', 'student_registrations.course_instance_id')
+            .leftJoin('student_attendance', 'course_instances.id', 'student_attendance.course_instance_id')
+            .where('course_instances.instructor_id', req.user?.userId)
+            .groupBy(
+                'course_instances.id',
+                'course_instances.course_number',
+                'course_instances.requested_date',
+                'organizations.name',
+                'course_instances.location',
+                'course_types.name',
+                'course_instances.max_students',
+                'course_instances.status'
+            )
+            .orderBy('course_instances.requested_date', 'desc');
+
+        logger.debug('Courses fetched successfully:', {
+            requestId,
+            count: courses.length,
+            timestamp: new Date().toISOString()
+        });
+
+        // Get available dates for scheduling
+        const availableDates = await db('instructor_availability')
+            .select('date')
+            .where('instructor_id', req.user?.userId)
+            .where('status', 'available')
+            .orderBy('date', 'asc');
+
+        logger.debug('Available dates fetched successfully:', {
+            requestId,
+            count: availableDates.length,
+            timestamp: new Date().toISOString()
+        });
+
+        res.json({
+            success: true,
+            data: {
+                courses,
+                availableDates: availableDates.map(date => date.date)
+            }
+        });
     } catch (error) {
-        logger.error('Instructor courses route - Error:', error);
-        logger.error('Error details:', error instanceof Error ? error.message : error);
-        logger.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace available');
-        res.status(500).json({ 
-            success: false, 
-            message: 'Error fetching courses',
-            error: error instanceof Error ? error.message : 'Unknown error'
+        logger.error('Error fetching instructor courses:', {
+            requestId,
+            error: error instanceof Error ? error.message : 'Unknown error',
+            stack: error instanceof Error ? error.stack : undefined,
+            timestamp: new Date().toISOString()
+        });
+        
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch courses'
         });
     }
 });

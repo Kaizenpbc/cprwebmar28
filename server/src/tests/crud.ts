@@ -1,4 +1,5 @@
-import db from '../config/db';
+import { db } from '../config/db';
+import { Knex } from 'knex';
 
 interface TestRecord {
     id?: number;
@@ -61,7 +62,7 @@ async function runCRUDTests() {
         
         // Transaction Test
         console.log('\nTesting Transaction...');
-        await db.transaction(async (trx) => {
+        await db.transaction(async (trx: Knex.Transaction) => {
             const transactionResult = await trx('test_crud')
                 .insert({
                     name: 'Transaction User',
@@ -74,8 +75,8 @@ async function runCRUDTests() {
             if (transactionResult[0].id % 2 === 0) {
                 throw new Error('Simulated error for odd IDs');
             }
-        }).catch(error => {
-            console.log('Transaction rolled back as expected:', error.message);
+        }).catch((error: Error) => {
+            console.error('Transaction failed:', error);
         });
         
         // DELETE Test
@@ -91,7 +92,7 @@ async function runCRUDTests() {
         
         console.log('\nAll CRUD tests completed successfully!');
     } catch (error) {
-        console.error('Error during CRUD tests:', error);
+        console.error('Test failed:', error);
         throw error;
     } finally {
         // Cleanup

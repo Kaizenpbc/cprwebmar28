@@ -1,6 +1,6 @@
-import knex from '../config/db';
+import { db } from '../config/db';
 import path from 'path';
-import { up as initialSchemaUp } from '../migrations/001_initial_schema';
+import { up as initialSchemaUp } from '../migrations/20240328000000_initial_schema';
 
 async function debugMigration() {
     try {
@@ -9,7 +9,7 @@ async function debugMigration() {
         console.log('Migrations directory:', path.join(process.cwd(), 'src', 'migrations'));
 
         console.log('\n1. Checking current database state...');
-        const tables = await knex.raw(`
+        const tables = await db.raw(`
             SELECT table_name 
             FROM information_schema.tables 
             WHERE table_schema = 'public'
@@ -20,7 +20,7 @@ async function debugMigration() {
         try {
             // Force console to flush
             process.stdout.write('\n');
-            await initialSchemaUp(knex);
+            await initialSchemaUp(db);
             process.stdout.write('\n');
             console.log('Initial schema migration completed successfully');
         } catch (migrationError) {
@@ -32,7 +32,7 @@ async function debugMigration() {
         await new Promise(resolve => setTimeout(resolve, 1000));
 
         console.log('\n3. Verifying final state...');
-        const finalTables = await knex.raw(`
+        const finalTables = await db.raw(`
             SELECT table_name 
             FROM information_schema.tables 
             WHERE table_schema = 'public'

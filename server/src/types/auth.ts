@@ -1,10 +1,10 @@
-import { Request } from 'express';
+import { JwtPayload } from 'jsonwebtoken';
 import { UserRole } from './index';
 
 declare global {
   namespace Express {
     interface Request {
-      user?: {
+      user?: JwtPayload & {
         userId: number;
         role: UserRole;
         organizationId?: number;
